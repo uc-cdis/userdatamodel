@@ -1,15 +1,23 @@
 from . import Base
-from sqlalchemy import Integer, String, Column, Table, Boolean,BigInteger
+from sqlalchemy import Integer, String, Column, Table, Boolean,BigInteger, DateTime, text
+from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.dialects.postgres import ARRAY
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import ForeignKey
 from sqlalchemy.types import LargeBinary
 
-user_project = Table(
-    'user_project', Base.metadata,
-    Column('user_id', Integer, ForeignKey('user.id')),
-    Column('project_id', Integer, ForeignKey('project.id'))
-)
+class UserAccess(object):
+    __tablename__ = "user_access"
+    user_id = Column('user_id', Integer, ForeignKey('user.id')),
+    user = relationship('user', backref='user_access')
+
+    project_id = Column('project_id', Integer, ForeignKey('project.id'))
+
+    project = relationship('Project', backref='user_accesses')
+    privilege = Column("privilege", ARRAY(String))
+
+    provider_id = Column(Integer, ForeignKey('authorization_provider.id'))
+    auth_provider = relationship('AuthorizationProvider', backref='acls')
 
 user_group = Table(
     'user_group', Base.metadata,
@@ -38,12 +46,10 @@ class User(Base):
 
     research_groups = relationship("ResearchGroup", secondary=user_group, backref='users')
 
-    resources_granted = Column(ARRAY(String)) # eg: ["compute", "storage"]
     active = Column(Boolean)
-    project_access = relationship(
-        "Project",
-        secondary=user_project,
-        backref='users')
+    project_access = association_proxy(
+        "user_accesses",
+        "project")
 
 
 class IdentityProvider(Base):
@@ -53,6 +59,12 @@ class IdentityProvider(Base):
     name = Column(String, unique=True)
     description = Column(String)
     
+class AuthorizationProvider(Base):
+    __tablename__ = 'authorization_provider'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, unique=True)
+    description = Column(String)
 
 class Bucket(Base):
     __tablename__ = 'bucket'
@@ -135,6 +147,16 @@ class StorageQuota(Base):
     max_size = Column(BigInteger)
     max_buckets = Column(Integer)
 
+class EventLog(Base):
+    __tablename__ = "event_log"
+
+    id = Column(Integer, primary_key=True)
+    action = Column(String)
+    timestamp = Column(DateTime(timezone=True), nullable=False, server_default=text('now()'))
+    target = Column(String)
+    target_type = Column(String)
+    description = Column(String)
+
 # application related tables
 
 class Application(Base):
@@ -143,6 +165,7 @@ class Application(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('user.id'))
     user = relationship('User', backref='application')
+    resources_granted = Column(ARRAY(String)) # eg: ["compute", "storage"]
     certificates_uploaded = relationship(
         "Certificate",
         backref='user',
@@ -157,3 +180,4 @@ class Certificate(Base):
     application_id = Column(Integer, ForeignKey('application.id'))
     name = Column(String(40))
     data = Column(LargeBinary)
+
