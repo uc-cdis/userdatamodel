@@ -3,7 +3,7 @@ from sqlalchemy.orm import relationship
 from . import Base
 from .user import User
 from sqlalchemy.schema import ForeignKey
-
+from flask import current_app as capp
 
 class Client(Base):
     __tablename__ = "client"
@@ -15,10 +15,11 @@ class Client(Base):
     description = Column(String(400))
 
     # required if you need to support client credential
-    user_id = Column(Integer, ForeignKey('user.id'))
+    user_id = Column(Integer, ForeignKey(User.id))
     user = relationship('User', backref='clients')
 
     client_id = Column(String(40), primary_key=True)
+    # this is hashed secret
     client_secret = Column(String(55), unique=True, index=True,
                            nullable=False)
 
@@ -27,9 +28,8 @@ class Client(Base):
 
     _redirect_uris = Column(Text)
     _default_scopes = Column(Text)
-
-    _scopes = ['storage', 'compute']
-
+    _scopes = ['compute', 'storage']
+    allowed_grant_types = ["authorization_code"]
     @property
     def client_type(self):
         if self.is_confidential:
@@ -53,7 +53,9 @@ class Client(Base):
         return []
 
     def validate_scopes(self, scopes):
-        return all(scope in self._scopes for scope in scopes.split(','))
+        print scopes
+        print self._scopes
+        return all(scope in self._scopes for scope in scopes)
 
 
 class Grant(Base):
@@ -62,9 +64,9 @@ class Grant(Base):
     id = Column(Integer, primary_key=True)
 
     user_id = Column(
-        Integer, ForeignKey('user.id', ondelete='CASCADE')
+        Integer, ForeignKey(User.id, ondelete='CASCADE')
     )
-    user = relationship('User', backref="grants")
+    user = relationship('User', backref="grants", lazy='subquery')
 
     client_id = Column(
         String(40), ForeignKey('client.client_id'),
@@ -80,9 +82,10 @@ class Grant(Base):
     _scopes = Column(Text)
 
     def delete(self):
-        session.delete(self)
-        session.commit()
-        return self
+        with capp.db.session as session:
+            session.delete(self)
+            session.commit()
+            return self
 
     @property
     def scopes(self):
@@ -102,7 +105,7 @@ class Token(Base):
     client = relationship('Client')
 
     user_id = Column(
-        Integer, ForeignKey('user.id')
+        Integer, ForeignKey(User.id)
     )
     user = relationship('User')
 
@@ -115,9 +118,10 @@ class Token(Base):
     _scopes = Column(Text)
 
     def delete(self):
-        session.delete(self)
-        session.commit()
-        return self
+        with capp.db.session as session:
+            session.delete(self)
+            session.commit()
+            return self
 
     @property
     def scopes(self):

@@ -6,37 +6,16 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.schema import ForeignKey
 from sqlalchemy.types import LargeBinary
 
-class UserAccess(object):
-    __tablename__ = "user_access"
-    user_id = Column('user_id', Integer, ForeignKey('user.id')),
-    user = relationship('user', backref='user_access')
-
-    project_id = Column('project_id', Integer, ForeignKey('project.id'))
-
-    project = relationship('Project', backref='user_accesses')
-    privilege = Column("privilege", ARRAY(String))
-
-    provider_id = Column(Integer, ForeignKey('authorization_provider.id'))
-    auth_provider = relationship('AuthorizationProvider', backref='acls')
 
 user_group = Table(
     'user_group', Base.metadata,
-    Column('user_id', Integer, ForeignKey('user.id')),
+    Column('user_id', Integer, ForeignKey('User.id')),
     Column('group_id', Integer, ForeignKey('research_group.id'))
 )
 
-class ResearchGroup(Base):
-    __tablename__ = "research_group"
-
-    id = Column(Integer, primary_key=True)
-    name = Column(Integer, unique=True)
-
-    lead_id = Column(Integer, ForeignKey('user.id'))
-    lead = relationship('User', backref='lead_group')
-
 
 class User(Base):
-    __tablename__ = "user"
+    __tablename__ = "User"
 
     id = Column(Integer, primary_key=True)
     username = Column(String(40), unique=True)
@@ -50,6 +29,33 @@ class User(Base):
     project_access = association_proxy(
         "user_accesses",
         "project")
+
+
+class UserAccess(object):
+    __tablename__ = "user_access"
+    user_id = Column('user_id', Integer, ForeignKey(User.id)),
+    user = relationship('User', backref='user_access')
+
+    project_id = Column('project_id', Integer, ForeignKey('project.id'))
+
+    project = relationship('Project', backref='user_accesses')
+    privilege = Column("privilege", ARRAY(String))
+
+    provider_id = Column(Integer, ForeignKey('authorization_provider.id'))
+    auth_provider = relationship('AuthorizationProvider', backref='acls')
+
+
+
+class ResearchGroup(Base):
+    __tablename__ = "research_group"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(Integer, unique=True)
+
+    lead_id = Column(Integer, ForeignKey(User.id))
+    lead = relationship('User', backref='lead_group')
+
+
 
 
 class IdentityProvider(Base):
@@ -110,7 +116,7 @@ class ComputeQuota(Base):
     project_id = Column(Integer, ForeignKey('project.id'))
     project = relationship('Project', backref='compute_quota')
 
-    user_id = Column(Integer, ForeignKey('user.id'))
+    user_id = Column(Integer, ForeignKey(User.id))
     user = relationship('User', backref='compute_quota')
 
     group_id = Column(Integer, ForeignKey('research_group.id'))
@@ -134,7 +140,7 @@ class StorageQuota(Base):
     project_id = Column(Integer, ForeignKey('project.id'))
     project = relationship('Project', backref='storage_quota')
 
-    user_id = Column(Integer, ForeignKey('user.id'))
+    user_id = Column(Integer, ForeignKey(User.id))
     user = relationship('User', backref='storage_quota')
 
     group_id = Column(Integer, ForeignKey('research_group.id'))
@@ -163,7 +169,7 @@ class Application(Base):
     __tablename__ = "application"
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('user.id'))
+    user_id = Column(Integer, ForeignKey(User.id))
     user = relationship('User', backref='application')
     resources_granted = Column(ARRAY(String)) # eg: ["compute", "storage"]
     certificates_uploaded = relationship(

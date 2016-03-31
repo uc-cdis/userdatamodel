@@ -11,7 +11,7 @@ class SQLAlchemyDriver(object):
         Base.metadata.bind = self.engine
         Base.metadata.create_all()
 
-        self.Session = sessionmaker(bind=self.engine)
+        self.Session = sessionmaker(bind=self.engine, expire_on_commit=False)
 
     @property
     @contextmanager
