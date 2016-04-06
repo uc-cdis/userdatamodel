@@ -53,8 +53,7 @@ class Client(Base):
         return []
 
     def validate_scopes(self, scopes):
-        print scopes
-        print self._scopes
+        scopes = scopes[0].split(',')
         return all(scope in self._scopes for scope in scopes)
 
 

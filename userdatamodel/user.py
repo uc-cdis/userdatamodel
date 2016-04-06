@@ -30,16 +30,19 @@ class User(Base):
         "user_accesses",
         "project")
 
+    application = relationship('Application', backref='user', uselist=False)
 
-class UserAccess(object):
+class UserAccess(Base):
     __tablename__ = "user_access"
-    user_id = Column('user_id', Integer, ForeignKey(User.id)),
-    user = relationship('User', backref='user_access')
 
-    project_id = Column('project_id', Integer, ForeignKey('project.id'))
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey(User.id))
+    user = relationship(User, backref='user_accesses')
+
+    project_id = Column(Integer, ForeignKey('project.id'))
 
     project = relationship('Project', backref='user_accesses')
-    privilege = Column("privilege", ARRAY(String))
+    privilege = Column(ARRAY(String))
 
     provider_id = Column(Integer, ForeignKey('authorization_provider.id'))
     auth_provider = relationship('AuthorizationProvider', backref='acls')
@@ -104,6 +107,7 @@ class Project(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True)
+    dbgap_accession_number = Column(String, unique=True)
     parent_id = Column(Integer, ForeignKey('project.id'))
     parent = relationship('Project', backref='sub_projects', remote_side=[id])
 
@@ -170,7 +174,6 @@ class Application(Base):
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey(User.id))
-    user = relationship('User', backref='application')
     resources_granted = Column(ARRAY(String)) # eg: ["compute", "storage"]
     certificates_uploaded = relationship(
         "Certificate",
@@ -185,5 +188,5 @@ class Certificate(Base):
     id = Column(Integer, primary_key=True)
     application_id = Column(Integer, ForeignKey('application.id'))
     name = Column(String(40))
+    extension = Column(String)
     data = Column(LargeBinary)
-
