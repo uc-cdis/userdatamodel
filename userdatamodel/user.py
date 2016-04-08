@@ -20,8 +20,13 @@ class User(Base):
     id = Column(Integer, primary_key=True)
     username = Column(String(40), unique=True)
 
+    email = Column(String(40))
+
     idp_id = Column(Integer, ForeignKey('identity_provider.id'))
     identity_provider = relationship('IdentityProvider', backref='users')
+
+    department_id = Column(Integer, ForeignKey('department.id'))
+    department = relationship('Department', backref='users')
 
     research_groups = relationship("ResearchGroup", secondary=user_group, backref='users')
 
@@ -108,6 +113,7 @@ class Project(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True)
     dbgap_accession_number = Column(String, unique=True)
+    description = Column(String)
     parent_id = Column(Integer, ForeignKey('project.id'))
     parent = relationship('Project', backref='sub_projects', remote_side=[id])
 
@@ -167,6 +173,25 @@ class EventLog(Base):
     target_type = Column(String)
     description = Column(String)
 
+
+class Organization(Base):
+    __tablename__ = 'organization'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, unique=True)
+    description = Column(String)
+
+
+class Department(Base):
+    __tablename__ = 'department'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, unique=True)
+    description = Column(String)
+
+    org_id = Column(Integer, ForeignKey('organization.id'))
+    organization = relationship('Organization', backref='departments')
+
 # application related tables
 
 class Application(Base):
@@ -190,3 +215,7 @@ class Certificate(Base):
     name = Column(String(40))
     extension = Column(String)
     data = Column(LargeBinary)
+
+    @property
+    def filename(self):
+        return '{}.{}'.format(self.name, self.extension)
