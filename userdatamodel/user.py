@@ -35,6 +35,10 @@ class User(Base):
         "user_accesses",
         "project")
 
+    buckets = association_proxy(
+        "user_to_buckets",
+        "bucket")
+
     application = relationship('Application', backref='user', uselist=False)
 
 class UserAccess(Base):
@@ -51,6 +55,19 @@ class UserAccess(Base):
 
     provider_id = Column(Integer, ForeignKey('authorization_provider.id'))
     auth_provider = relationship('AuthorizationProvider', backref='acls')
+
+
+class UserToBucket(Base):
+    __tablename__ = "user_to_bucket"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey(User.id))
+    user = relationship(User, backref='user_to_buckets')
+
+    bucket_id = Column(Integer, ForeignKey('bucket.id'))
+
+    bucket = relationship('Bucket', backref='user_to_buckets')
+    privilege = Column(ARRAY(String))
 
 
 
