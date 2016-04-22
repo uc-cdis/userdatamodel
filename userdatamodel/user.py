@@ -1,4 +1,5 @@
 from . import Base
+import datetime
 from sqlalchemy import Integer, String, Column, Table, Boolean,BigInteger, DateTime, text
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.dialects.postgres import ARRAY
@@ -104,6 +105,11 @@ class Bucket(Base):
     name = Column(String)
     provider_id = Column(Integer, ForeignKey('storage_provider.id'))
     provider = relationship('StorageProvider', backref='buckets')
+    users = association_proxy(
+        "user_to_buckets",
+        "user")
+
+
 
 
 class StorageProvider(Base):
@@ -112,6 +118,7 @@ class StorageProvider(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True)
     host = Column(String, unique=True)
+    backend = Column(String)
     description = Column(String)
 
 
@@ -246,6 +253,6 @@ class S3Credential(Base):
 
     access_key = Column(String)
     
-    timestamp = Column(DateTime(timezone=True), nullable=False, server_default=text('now()'))
+    timestamp = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
     expire = Column(Integer)
 
