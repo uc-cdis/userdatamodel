@@ -236,3 +236,16 @@ class Certificate(Base):
     @property
     def filename(self):
         return '{}.{}'.format(self.name, self.extension)
+
+class S3Credential(Base):
+    __tablename__ = "s3credential"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey(User.id))
+    user = relationship("User", backref="s3credentials")
+
+    access_key = Column(String)
+    
+    timestamp = Column(DateTime(timezone=True), nullable=False, server_default=text('now()'))
+    expire = Column(Integer)
+
