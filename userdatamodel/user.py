@@ -1,4 +1,5 @@
 from . import Base
+import datetime
 from sqlalchemy import Integer, String, Column, Table, Boolean,BigInteger, DateTime, text
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.dialects.postgres import ARRAY
@@ -6,43 +7,27 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.schema import ForeignKey
 from sqlalchemy.types import LargeBinary
 
-class UserAccess(object):
-    __tablename__ = "user_access"
-    user_id = Column('user_id', Integer, ForeignKey('user.id')),
-    user = relationship('user', backref='user_access')
-
-    project_id = Column('project_id', Integer, ForeignKey('project.id'))
-
-    project = relationship('Project', backref='user_accesses')
-    privilege = Column("privilege", ARRAY(String))
-
-    provider_id = Column(Integer, ForeignKey('authorization_provider.id'))
-    auth_provider = relationship('AuthorizationProvider', backref='acls')
 
 user_group = Table(
     'user_group', Base.metadata,
-    Column('user_id', Integer, ForeignKey('user.id')),
+    Column('user_id', Integer, ForeignKey('User.id')),
     Column('group_id', Integer, ForeignKey('research_group.id'))
 )
 
-class ResearchGroup(Base):
-    __tablename__ = "research_group"
-
-    id = Column(Integer, primary_key=True)
-    name = Column(Integer, unique=True)
-
-    lead_id = Column(Integer, ForeignKey('user.id'))
-    lead = relationship('User', backref='lead_group')
-
 
 class User(Base):
-    __tablename__ = "user"
+    __tablename__ = "User"
 
     id = Column(Integer, primary_key=True)
     username = Column(String(40), unique=True)
 
+    email = Column(String(40))
+
     idp_id = Column(Integer, ForeignKey('identity_provider.id'))
     identity_provider = relationship('IdentityProvider', backref='users')
+
+    department_id = Column(Integer, ForeignKey('department.id'))
+    department = relationship('Department', backref='users')
 
     research_groups = relationship("ResearchGroup", secondary=user_group, backref='users')
 
@@ -50,6 +35,53 @@ class User(Base):
     project_access = association_proxy(
         "user_accesses",
         "project")
+
+    buckets = association_proxy(
+        "user_to_buckets",
+        "bucket")
+
+    application = relationship('Application', backref='user', uselist=False)
+
+class UserAccess(Base):
+    __tablename__ = "user_access"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey(User.id))
+    user = relationship(User, backref='user_accesses')
+
+    project_id = Column(Integer, ForeignKey('project.id'))
+
+    project = relationship('Project', backref='user_accesses')
+    privilege = Column(ARRAY(String))
+
+    provider_id = Column(Integer, ForeignKey('authorization_provider.id'))
+    auth_provider = relationship('AuthorizationProvider', backref='acls')
+
+
+class UserToBucket(Base):
+    __tablename__ = "user_to_bucket"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey(User.id))
+    user = relationship(User, backref='user_to_buckets')
+
+    bucket_id = Column(Integer, ForeignKey('bucket.id'))
+
+    bucket = relationship('Bucket', backref='user_to_buckets')
+    privilege = Column(ARRAY(String))
+
+
+
+class ResearchGroup(Base):
+    __tablename__ = "research_group"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(Integer, unique=True)
+
+    lead_id = Column(Integer, ForeignKey(User.id))
+    lead = relationship('User', backref='lead_group')
+
+
 
 
 class IdentityProvider(Base):
@@ -73,6 +105,11 @@ class Bucket(Base):
     name = Column(String)
     provider_id = Column(Integer, ForeignKey('storage_provider.id'))
     provider = relationship('StorageProvider', backref='buckets')
+    users = association_proxy(
+        "user_to_buckets",
+        "user")
+
+
 
 
 class StorageProvider(Base):
@@ -81,6 +118,7 @@ class StorageProvider(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True)
     host = Column(String, unique=True)
+    backend = Column(String)
     description = Column(String)
 
 
@@ -98,6 +136,8 @@ class Project(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True)
+    dbgap_accession_number = Column(String, unique=True)
+    description = Column(String)
     parent_id = Column(Integer, ForeignKey('project.id'))
     parent = relationship('Project', backref='sub_projects', remote_side=[id])
 
@@ -110,7 +150,7 @@ class ComputeQuota(Base):
     project_id = Column(Integer, ForeignKey('project.id'))
     project = relationship('Project', backref='compute_quota')
 
-    user_id = Column(Integer, ForeignKey('user.id'))
+    user_id = Column(Integer, ForeignKey(User.id))
     user = relationship('User', backref='compute_quota')
 
     group_id = Column(Integer, ForeignKey('research_group.id'))
@@ -134,7 +174,7 @@ class StorageQuota(Base):
     project_id = Column(Integer, ForeignKey('project.id'))
     project = relationship('Project', backref='storage_quota')
 
-    user_id = Column(Integer, ForeignKey('user.id'))
+    user_id = Column(Integer, ForeignKey(User.id))
     user = relationship('User', backref='storage_quota')
 
     group_id = Column(Integer, ForeignKey('research_group.id'))
@@ -157,14 +197,32 @@ class EventLog(Base):
     target_type = Column(String)
     description = Column(String)
 
+
+class Organization(Base):
+    __tablename__ = 'organization'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, unique=True)
+    description = Column(String)
+
+
+class Department(Base):
+    __tablename__ = 'department'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, unique=True)
+    description = Column(String)
+
+    org_id = Column(Integer, ForeignKey('organization.id'))
+    organization = relationship('Organization', backref='departments')
+
 # application related tables
 
 class Application(Base):
     __tablename__ = "application"
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('user.id'))
-    user = relationship('User', backref='application')
+    user_id = Column(Integer, ForeignKey(User.id))
     resources_granted = Column(ARRAY(String)) # eg: ["compute", "storage"]
     certificates_uploaded = relationship(
         "Certificate",
@@ -179,5 +237,22 @@ class Certificate(Base):
     id = Column(Integer, primary_key=True)
     application_id = Column(Integer, ForeignKey('application.id'))
     name = Column(String(40))
+    extension = Column(String)
     data = Column(LargeBinary)
+
+    @property
+    def filename(self):
+        return '{}.{}'.format(self.name, self.extension)
+
+class S3Credential(Base):
+    __tablename__ = "s3credential"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey(User.id))
+    user = relationship("User", backref="s3credentials")
+
+    access_key = Column(String)
+    
+    timestamp = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
+    expire = Column(Integer)
 
