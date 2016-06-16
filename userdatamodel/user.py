@@ -21,7 +21,7 @@ class User(Base):
     id = Column(Integer, primary_key=True)
     username = Column(String(40), unique=True)
 
-    email = Column(String(40))
+    email = Column(String)
 
     idp_id = Column(Integer, ForeignKey('identity_provider.id'))
     identity_provider = relationship('IdentityProvider', backref='users')
@@ -32,6 +32,8 @@ class User(Base):
     research_groups = relationship("ResearchGroup", secondary=user_group, backref='users')
 
     active = Column(Boolean)
+    is_admin = Column(Boolean, default=False)
+
     project_access = association_proxy(
         "user_accesses",
         "project")

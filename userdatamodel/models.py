@@ -3,5 +3,4 @@ from user import (
     IdentityProvider, Application, Certificate,
     StorageProvider, StorageQuota, Bucket,
     ComputeProvider, ComputeQuota, UserToBucket,
-    S3Credential)
-
+    AuthorizationProvider, S3Credential)
