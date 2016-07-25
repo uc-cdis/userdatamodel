@@ -1,6 +1,6 @@
 from user import (
     User, Project, ResearchGroup, UserAccess,
     IdentityProvider, Application, Certificate,
-    StorageProvider, StorageQuota, Bucket,
-    ComputeProvider, ComputeQuota, UserToBucket,
+    StorageProvider, StorageAccess, Bucket,
+    ComputeProvider, ComputeAccess, UserToBucket,
     AuthorizationProvider, S3Credential)
