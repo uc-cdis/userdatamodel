@@ -2,7 +2,7 @@ from . import Base
 import datetime
 from sqlalchemy import Integer, String, Column, Table, Boolean,BigInteger, DateTime, text
 from sqlalchemy.ext.associationproxy import association_proxy
-from sqlalchemy.dialects.postgres import ARRAY
+from sqlalchemy.dialects.postgres import ARRAY, JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import ForeignKey
 from sqlalchemy.types import LargeBinary
@@ -20,7 +20,10 @@ class User(Base):
 
     id = Column(Integer, primary_key=True)
     username = Column(String(40), unique=True)
-
+    
+    # id from identifier, which is not guarenteed to be unique across all identifiers
+    # for most of the cases, it will be same as username
+    id_from_idp = Column(String)
     email = Column(String)
 
     idp_id = Column(Integer, ForeignKey('identity_provider.id'))
@@ -43,6 +46,7 @@ class User(Base):
         "bucket")
 
     application = relationship('Application', backref='user', uselist=False)
+
 
 class UserAccess(Base):
     __tablename__ = "user_access"
@@ -71,7 +75,6 @@ class UserToBucket(Base):
 
     bucket = relationship('Bucket', backref='user_to_buckets')
     privilege = Column(ARRAY(String))
-
 
 
 class ResearchGroup(Base):
@@ -142,52 +145,71 @@ class Project(Base):
     description = Column(String)
     parent_id = Column(Integer, ForeignKey('project.id'))
     parent = relationship('Project', backref='sub_projects', remote_side=[id])
+    buckets = association_proxy(
+    "project_to_buckets",
+    "bucket")
 
-class ComputeQuota(Base):
-    __tablename__ = "compute_quota"
+class ProjectToBucket(Base):
+    __tablename__ = "project_to_bucket"
+
+    id = Column(Integer, primary_key=True)
+    project_id = Column(Integer, ForeignKey('project.id'))
+    project = relationship(Project, backref='project_to_buckets')
+
+    bucket_id = Column(Integer, ForeignKey('bucket.id'))
+
+    bucket = relationship('Bucket', backref='project_to_buckets')
+    privilege = Column(ARRAY(String))
+
+
+class ComputeAccess(Base):
+    __tablename__ = "compute_access"
 
     id = Column(Integer, primary_key=True)
 
-    # compute quota can be linked to a project/research group/user
+    # compute access can be linked to a project/research group/user
     project_id = Column(Integer, ForeignKey('project.id'))
-    project = relationship('Project', backref='compute_quota')
+    project = relationship('Project', backref='compute_access')
 
     user_id = Column(Integer, ForeignKey(User.id))
-    user = relationship('User', backref='compute_quota')
+    user = relationship('User', backref='compute_access')
 
     group_id = Column(Integer, ForeignKey('research_group.id'))
-    research_group = relationship('ResearchGroup', backref='compute_quota')
+    research_group = relationship('ResearchGroup', backref='compute_access')
 
     provider_id = Column(Integer, ForeignKey('compute_provider.id'))
-    provider = relationship('ComputeProvider', backref='compute_quota')
+    provider = relationship('ComputeProvider', backref='compute_access')
 
     instances = Column(Integer)
     cores = Column(Integer)
     ram = Column(BigInteger)
     floating_ips = Column(Integer)
+    additional_info = Column(JSONB)
 
 
-class StorageQuota(Base):
-    __tablename__ = "storage_quota"
+class StorageAccess(Base):
+    __tablename__ = "storage_access"
 
     id = Column(Integer, primary_key=True)
 
-    # storage quota can be linked to a project/research group/user
+    # storage access can be linked to a project/research group/user
     project_id = Column(Integer, ForeignKey('project.id'))
-    project = relationship('Project', backref='storage_quota')
+    project = relationship('Project', backref='storage_access')
 
     user_id = Column(Integer, ForeignKey(User.id))
-    user = relationship('User', backref='storage_quota')
+    user = relationship('User', backref='storage_access')
 
     group_id = Column(Integer, ForeignKey('research_group.id'))
-    research_group = relationship('ResearchGroup', backref='storage_quota')
+    research_group = relationship('ResearchGroup', backref='storage_access')
 
     provider_id = Column(Integer, ForeignKey('storage_provider.id'))
-    provider = relationship('StorageProvider', backref='storage_quota')
+    provider = relationship('StorageProvider', backref='storage_access')
 
     max_objects = Column(BigInteger)
     max_size = Column(BigInteger)
     max_buckets = Column(Integer)
+    additional_info = Column(JSONB)
+
 
 class EventLog(Base):
     __tablename__ = "event_log"
