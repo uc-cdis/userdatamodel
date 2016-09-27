@@ -108,8 +108,8 @@ class Bucket(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
-    provider_id = Column(Integer, ForeignKey('storage_provider.id'))
-    provider = relationship('StorageProvider', backref='buckets')
+    provider_id = Column(Integer, ForeignKey('cloud_provider.id'))
+    provider = relationship('CloudProvider', backref='buckets')
     users = association_proxy(
         "user_to_buckets",
         "user")
@@ -117,23 +117,16 @@ class Bucket(Base):
 
 
 
-class StorageProvider(Base):
-    __tablename__ = 'storage_provider'
+class CloudProvider(Base):
+    __tablename__ = 'cloud_provider'
 
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True)
-    host = Column(String, unique=True)
+    endpoint = Column(String, unique=True)
     backend = Column(String)
     description = Column(String)
-
-
-class ComputeProvider(Base):
-    __tablename__ = 'compute_provider'
-
-    id = Column(Integer, primary_key=True)
-    name = Column(String, unique=True)
-    auth_url = Column(String, unique=True)
-    description = Column(String)
+    # type of service, can be compute, storage, or general
+    service = Column(String)
 
 
 class Project(Base):
@@ -177,8 +170,8 @@ class ComputeAccess(Base):
     group_id = Column(Integer, ForeignKey('research_group.id'))
     research_group = relationship('ResearchGroup', backref='compute_access')
 
-    provider_id = Column(Integer, ForeignKey('compute_provider.id'))
-    provider = relationship('ComputeProvider', backref='compute_access')
+    provider_id = Column(Integer, ForeignKey('cloud_provider.id'))
+    provider = relationship('CloudProvider', backref='compute_access')
 
     instances = Column(Integer)
     cores = Column(Integer)
@@ -202,8 +195,8 @@ class StorageAccess(Base):
     group_id = Column(Integer, ForeignKey('research_group.id'))
     research_group = relationship('ResearchGroup', backref='storage_access')
 
-    provider_id = Column(Integer, ForeignKey('storage_provider.id'))
-    provider = relationship('StorageProvider', backref='storage_access')
+    provider_id = Column(Integer, ForeignKey('cloud_provider.id'))
+    provider = relationship('CloudProvider', backref='storage_access')
 
     max_objects = Column(BigInteger)
     max_size = Column(BigInteger)
