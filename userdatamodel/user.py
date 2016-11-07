@@ -1,6 +1,6 @@
 from . import Base
 import datetime
-from sqlalchemy import Integer, String, Column, Table, Boolean,BigInteger, DateTime, text
+from sqlalchemy import Integer, String, Column, Table, Boolean, BigInteger, DateTime, text
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.dialects.postgres import ARRAY, JSONB
 from sqlalchemy.orm import relationship
@@ -47,6 +47,21 @@ class User(Base):
 
     application = relationship('Application', backref='user', uselist=False)
 
+
+class HMACKeyPair(Base):
+    __tablename__ = "hmac_keypair"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey(User.id))
+    user = relationship("User", backref="hmac_keypairs")
+
+    access_key = Column(String)
+    # AES-128 encrypted
+    secret_key = Column(String)
+    
+    timestamp = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
+    expire = Column(Integer)
+    active = Column(Boolean, default=True)
 
 class UserAccess(Base):
     __tablename__ = "user_access"
