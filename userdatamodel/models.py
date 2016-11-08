@@ -3,4 +3,5 @@ from user import (
     IdentityProvider, Application, Certificate,
     CloudProvider, StorageAccess, Bucket,
     ComputeAccess, UserToBucket,
-    AuthorizationProvider, S3Credential)
+    AuthorizationProvider, S3Credential,
+    HMACKeyPair, HMACKeyPairArchive)

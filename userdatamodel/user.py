@@ -1,6 +1,6 @@
 from . import Base
 import datetime
-from sqlalchemy import Integer, String, Column, Table, Boolean,BigInteger, DateTime, text
+from sqlalchemy import Integer, String, Column, Table, Boolean, BigInteger, DateTime, text
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.dialects.postgres import ARRAY, JSONB
 from sqlalchemy.orm import relationship
@@ -47,6 +47,59 @@ class User(Base):
 
     application = relationship('Application', backref='user', uselist=False)
 
+
+class HMACKeyPair(Base):
+    __tablename__ = "hmac_keypair"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey(User.id))
+    user = relationship("User", backref="hmac_keypairs")
+
+    access_key = Column(String)
+    # AES-128 encrypted
+    secret_key = Column(String)
+    
+    timestamp = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
+    expire = Column(Integer)
+    active = Column(Boolean, default=True)
+
+    @property
+    def expiration_time(self):
+        return self.timestamp + datetime.timedelta(seconds=self.expire)
+
+    def check_and_archive(self, session):
+        if self.expiration_time < datetime.datetime.utcnow():
+            self.archive_keypair(session)
+            return True
+        return False
+
+    def archive_keypair(self, session):
+        archive = HMACKeyPairArchive(
+            user_id=self.user_id,
+            access_key=self.access_key,
+            secret_key=self.secret_key,
+            timestamp=self.timestamp,
+            expire=self.expire)
+        session.add(archive)
+        session.delete(self)
+        session.commit()
+
+class HMACKeyPairArchive(Base):
+    '''
+    Archvie table to store expired or deleted keypair
+    '''
+    __tablename__ = "hmac_keypair_archive"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey(User.id))
+    user = relationship("User", backref="archive_keypairs")
+
+    access_key = Column(String)
+    # AES-128 encrypted
+    secret_key = Column(String)
+    
+    timestamp = Column(DateTime, nullable=False)
+    expire = Column(Integer)
 
 class UserAccess(Base):
     __tablename__ = "user_access"
