@@ -2,11 +2,11 @@ from . import Base
 import datetime
 from sqlalchemy import Integer, String, Column, Table, Boolean, BigInteger, DateTime, text
 from sqlalchemy.ext.associationproxy import association_proxy
-from sqlalchemy.dialects.postgres import ARRAY, JSONB
+from sqlalchemy.dialects.postgres import ARRAY, JSONB, BYTEA
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import ForeignKey
 from sqlalchemy.types import LargeBinary
-
+import json
 
 user_group = Table(
     'user_group', Base.metadata,
@@ -20,7 +20,7 @@ class User(Base):
 
     id = Column(Integer, primary_key=True)
     username = Column(String(40), unique=True)
-    
+
     # id from identifier, which is not guarenteed to be unique across all identifiers
     # for most of the cases, it will be same as username
     id_from_idp = Column(String)
@@ -47,6 +47,21 @@ class User(Base):
 
     application = relationship('Application', backref='user', uselist=False)
 
+    def __str__(self):
+        str_out = {
+            'id': self.id,
+            'username': self.username,
+            'id_from_idp': self.id_from_idp,
+            'idp_id': self.idp_id,
+            'department_id': self.department_id,
+            'active': self.active,
+            'is_admin': self.is_admin
+        }
+        return json.dumps(str_out)
+
+    def __repr__(self):
+        return self.__str__()
+
 
 class HMACKeyPair(Base):
     __tablename__ = "hmac_keypair"
@@ -57,8 +72,8 @@ class HMACKeyPair(Base):
 
     access_key = Column(String)
     # AES-128 encrypted
-    secret_key = Column(String)
-    
+    secret_key = Column(BYTEA)
+
     timestamp = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
     expire = Column(Integer)
     active = Column(Boolean, default=True)
@@ -84,6 +99,22 @@ class HMACKeyPair(Base):
         session.delete(self)
         session.commit()
 
+    def __str__(self):
+        str_out = {
+            'id': self.id,
+            'user_id': self.user_id,
+            'access_key': self.access_key,
+            'secret_key': self.secret_key,
+            'timestamp': self.timestamp,
+            'expire': self.expire,
+            'active': self.active
+        }
+        return json.dumps(str_out)
+
+    def __repr__(self):
+        return self.__str__()
+
+
 class HMACKeyPairArchive(Base):
     '''
     Archvie table to store expired or deleted keypair
@@ -97,9 +128,10 @@ class HMACKeyPairArchive(Base):
     access_key = Column(String)
     # AES-128 encrypted
     secret_key = Column(String)
-    
+
     timestamp = Column(DateTime, nullable=False)
     expire = Column(Integer)
+
 
 class UserAccess(Base):
     __tablename__ = "user_access"
@@ -115,6 +147,19 @@ class UserAccess(Base):
 
     provider_id = Column(Integer, ForeignKey('authorization_provider.id'))
     auth_provider = relationship('AuthorizationProvider', backref='acls')
+
+    def __str__(self):
+        str_out = {
+            'id': self.id,
+            'user_id': self.user_id,
+            'project_id': self.project_id,
+            'privilege': self.privilege,
+            'provider_id': self.provider_id
+        }
+        return json.dumps(str_out)
+
+    def __repr__(self):
+        return self.__str__()
 
 
 class UserToBucket(Base):
@@ -158,6 +203,7 @@ class AuthorizationProvider(Base):
     name = Column(String, unique=True)
     description = Column(String)
 
+
 class Bucket(Base):
     __tablename__ = 'bucket'
 
@@ -168,8 +214,6 @@ class Bucket(Base):
     users = association_proxy(
         "user_to_buckets",
         "user")
-
-
 
 
 class CloudProvider(Base):
@@ -194,8 +238,22 @@ class Project(Base):
     parent_id = Column(Integer, ForeignKey('project.id'))
     parent = relationship('Project', backref='sub_projects', remote_side=[id])
     buckets = association_proxy(
-    "project_to_buckets",
-    "bucket")
+        "project_to_buckets",
+        "bucket")
+
+    def __str__(self):
+        str_out = {
+            'id': self.id,
+            'name': self.name,
+            'dbgap_accession_number': self.dbgap_accession_number,
+            'description': self.description,
+            'parent_id': self.parent_id
+        }
+        return json.dumps(str_out)
+
+    def __repr__(self):
+        return self.__str__()
+
 
 class ProjectToBucket(Base):
     __tablename__ = "project_to_bucket"
@@ -288,6 +346,7 @@ class Department(Base):
     org_id = Column(Integer, ForeignKey('organization.id'))
     organization = relationship('Organization', backref='departments')
 
+
 # application related tables
 
 class Application(Base):
@@ -295,7 +354,7 @@ class Application(Base):
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey(User.id))
-    resources_granted = Column(ARRAY(String)) # eg: ["compute", "storage"]
+    resources_granted = Column(ARRAY(String))  # eg: ["compute", "storage"]
     certificates_uploaded = relationship(
         "Certificate",
         backref='user',
@@ -316,6 +375,7 @@ class Certificate(Base):
     def filename(self):
         return '{}.{}'.format(self.name, self.extension)
 
+
 class S3Credential(Base):
     __tablename__ = "s3credential"
 
@@ -324,7 +384,7 @@ class S3Credential(Base):
     user = relationship("User", backref="s3credentials")
 
     access_key = Column(String)
-    
+
     timestamp = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
     expire = Column(Integer)
 
