@@ -2,7 +2,7 @@ from . import Base
 import datetime
 from sqlalchemy import Integer, String, Column, Table, Boolean, BigInteger, DateTime, text
 from sqlalchemy.ext.associationproxy import association_proxy
-from sqlalchemy.dialects.postgres import ARRAY, JSONB
+from sqlalchemy.dialects.postgres import ARRAY, JSONB, BYTEA
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import ForeignKey
 from sqlalchemy.types import LargeBinary
@@ -72,7 +72,7 @@ class HMACKeyPair(Base):
 
     access_key = Column(String)
     # AES-128 encrypted
-    secret_key = Column(String)
+    secret_key = Column(BYTEA)
 
     timestamp = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
     expire = Column(Integer)
@@ -191,6 +191,9 @@ class IdentityProvider(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True)
     description = Column(String)
+    
+    google = "google"
+    itrust = "itrust"
 
 
 class AuthorizationProvider(Base):
