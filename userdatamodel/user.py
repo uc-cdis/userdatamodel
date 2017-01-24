@@ -140,8 +140,6 @@ class ResearchGroup(Base):
     lead = relationship('User', backref='lead_group')
 
 
-
-
 class IdentityProvider(Base):
     __tablename__ = 'identity_provider'
 
@@ -149,6 +147,10 @@ class IdentityProvider(Base):
     name = Column(String, unique=True)
     description = Column(String)
     
+    google = "google"
+    itrust = "itrust"
+
+
 class AuthorizationProvider(Base):
     __tablename__ = 'authorization_provider'
 
