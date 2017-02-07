@@ -6,4 +6,7 @@ setup(
     install_requires=[
         'sqlalchemy==0.9.9',
     ],
+    scripts=[
+        'bin/userdatamodel-init',
+    ],
 )
