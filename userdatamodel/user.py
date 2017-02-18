@@ -1,9 +1,12 @@
 from . import Base
 import datetime
-from sqlalchemy import Integer, String, Column, Table, Boolean, BigInteger, DateTime, text
+from sqlalchemy import (
+    Integer, String, Column, Table, Boolean, BigInteger, DateTime, text)
+from sqlalchemy import UniqueConstraint
+from sqlalchemy.orm.collections import attribute_mapped_collection
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.dialects.postgres import ARRAY, JSONB, BYTEA
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, backref
 from sqlalchemy.schema import ForeignKey
 from sqlalchemy.types import LargeBinary
 import json
@@ -21,8 +24,9 @@ class User(Base):
     id = Column(Integer, primary_key=True)
     username = Column(String(40), unique=True)
 
-    # id from identifier, which is not guarenteed to be unique across all identifiers
-    # for most of the cases, it will be same as username
+    # id from identifier, which is not guarenteed to be unique
+    # across all identifiers.
+    # For most of the cases, it will be same as username
     id_from_idp = Column(String)
     email = Column(String)
 
@@ -32,14 +36,20 @@ class User(Base):
     department_id = Column(Integer, ForeignKey('department.id'))
     department = relationship('Department', backref='users')
 
-    research_groups = relationship("ResearchGroup", secondary=user_group, backref='users')
+    research_groups = relationship(
+        "ResearchGroup", secondary=user_group, backref='users')
 
     active = Column(Boolean)
     is_admin = Column(Boolean, default=False)
 
-    project_access = association_proxy(
+    projects = association_proxy(
         "user_accesses",
         "project")
+    project_access = association_proxy(
+        "user_accesses",
+        "privilege",
+        creator=lambda k, v: UserAccess(privilege=v, pj=k)
+        )
 
     buckets = association_proxy(
         "user_to_buckets",
@@ -135,14 +145,21 @@ class HMACKeyPairArchive(Base):
 
 class UserAccess(Base):
     __tablename__ = "user_access"
+    __table_args__ = (
+        UniqueConstraint("user_id", "project_id", name='uniq_ua'),
+    )
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey(User.id))
-    user = relationship(User, backref='user_accesses')
+    user = relationship(
+        User, backref=backref('user_accesses',
+        collection_class=attribute_mapped_collection("pj"))
+    )
 
     project_id = Column(Integer, ForeignKey('project.id'))
 
     project = relationship('Project', backref='user_accesses')
+    pj = association_proxy("project", "auth_id")
     privilege = Column(ARRAY(String))
 
     provider_id = Column(Integer, ForeignKey('authorization_provider.id'))
@@ -233,7 +250,8 @@ class Project(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True)
-    dbgap_accession_number = Column(String, unique=True)
+    # identifier recognozied by the authorization provider
+    auth_id = Column(String, unique=True)
     description = Column(String)
     parent_id = Column(Integer, ForeignKey('project.id'))
     parent = relationship('Project', backref='sub_projects', remote_side=[id])
@@ -245,7 +263,7 @@ class Project(Base):
         str_out = {
             'id': self.id,
             'name': self.name,
-            'dbgap_accession_number': self.dbgap_accession_number,
+            'auth_id': self.auth_id,
             'description': self.description,
             'parent_id': self.parent_id
         }
@@ -385,6 +403,6 @@ class S3Credential(Base):
 
     access_key = Column(String)
 
-    timestamp = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
+    timestamp = Column(
+        DateTime, nullable=False, default=datetime.datetime.utcnow)
     expire = Column(Integer)
-
