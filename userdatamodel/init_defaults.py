@@ -10,3 +10,4 @@ def init_defaults(db):
                     .filter(IdentityProvider.name == provider)
                     .first()):
                 provider = IdentityProvider(name=provider)
+                s.add(provider)
