@@ -12,7 +12,7 @@ class AWSHMACKeyPair(Base):
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey(User.id))
-    user = relationship("User", backref="hmac_keypairs")
+    user = relationship("User", backref="aws_hmac_keypairs")
 
     access_key = Column(String, unique=True)
 
@@ -51,7 +51,7 @@ class AWSHMACKeyPairArchive(Base):
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey(User.id))
-    user = relationship("User", backref="archive_keypairs")
+    user = relationship("User", backref="aws_archive_keypairs")
 
     access_key = Column(String, unique=True)
 
