@@ -5,7 +5,7 @@ from sqlalchemy import (
 from sqlalchemy import UniqueConstraint
 from sqlalchemy.orm.collections import attribute_mapped_collection
 from sqlalchemy.ext.associationproxy import association_proxy
-from sqlalchemy.dialects.postgres import ARRAY, JSONB, BYTEA
+from sqlalchemy.dialects.postgres import ARRAY, JSONB
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.schema import ForeignKey
 from sqlalchemy.types import LargeBinary
@@ -82,7 +82,7 @@ class HMACKeyPair(Base):
 
     access_key = Column(String)
     # AES-128 encrypted
-    secret_key = Column(BYTEA)
+    secret_key = Column(String)
 
     timestamp = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
     expire = Column(Integer)
