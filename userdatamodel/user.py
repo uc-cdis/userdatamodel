@@ -143,10 +143,10 @@ class HMACKeyPairArchive(Base):
     expire = Column(Integer)
 
 
-class UserAccess(Base):
-    __tablename__ = "user_access"
+class AccessPrivilege(Base):
+    __tablename__ = "access_privilege"
     __table_args__ = (
-        UniqueConstraint("user_id", "project_id", name='uniq_ua'),
+        UniqueConstraint("user_id", "group_id", "project_id", name='uniq_ua'),
     )
 
     id = Column(Integer, primary_key=True)
@@ -156,12 +156,14 @@ class UserAccess(Base):
         collection_class=attribute_mapped_collection("pj"))
     )
 
-    project_id = Column(Integer, ForeignKey('project.id'))
+    group_id = Column(Integer, ForeignKey('research_group.id'))
+    research_group = relationship('ResearchGroup', backref='user_access')
 
+    project_id = Column(Integer, ForeignKey('project.id'))
     project = relationship('Project', backref='user_accesses')
     pj = association_proxy("project", "auth_id")
-    privilege = Column(ARRAY(String))
 
+    privilege = Column(ARRAY(String))
     provider_id = Column(Integer, ForeignKey('authorization_provider.id'))
     auth_provider = relationship('AuthorizationProvider', backref='acls')
 
