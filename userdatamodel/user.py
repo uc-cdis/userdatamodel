@@ -39,16 +39,23 @@ class User(Base):
     research_groups = relationship(
         "ResearchGroup", secondary=user_group, backref='users')
 
+    group_privileges = relationship(
+        "AccessPrivilege", primaryjoin="user_group.user_id==User.id",
+        secondary="join(access_privilege.group_id == user_group.group_id)"
+    )
+    group_accesses = association_proxy("group_privileges", "privilege")
+
     active = Column(Boolean)
     is_admin = Column(Boolean, default=False)
 
     projects = association_proxy(
-        "user_accesses",
+        "accesses_privilege",
         "project")
+
     project_access = association_proxy(
-        "user_accesses",
+        "accesses_privilege",
         "privilege",
-        creator=lambda k, v: UserAccess(privilege=v, pj=k)
+        creator=lambda k, v: AccessPrivilege(privilege=v, pj=k)
         )
 
     buckets = association_proxy(
@@ -146,21 +153,21 @@ class HMACKeyPairArchive(Base):
 class AccessPrivilege(Base):
     __tablename__ = "access_privilege"
     __table_args__ = (
-        UniqueConstraint("user_id", "group_id", "project_id", name='uniq_ua'),
+        UniqueConstraint("user_id", "group_id", "project_id", name='uniq_ap'),
     )
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey(User.id))
     user = relationship(
-        User, backref=backref('user_accesses',
+        User, backref=backref('accesses_privilege',
         collection_class=attribute_mapped_collection("pj"))
     )
 
     group_id = Column(Integer, ForeignKey('research_group.id'))
-    research_group = relationship('ResearchGroup', backref='user_access')
+    research_group = relationship('ResearchGroup', backref='accesses_privilege')
 
     project_id = Column(Integer, ForeignKey('project.id'))
-    project = relationship('Project', backref='user_accesses')
+    project = relationship('Project', backref='accesses_privilege')
     pj = association_proxy("project", "auth_id")
 
     privilege = Column(ARRAY(String))
@@ -172,6 +179,7 @@ class AccessPrivilege(Base):
             'id': self.id,
             'user_id': self.user_id,
             'project_id': self.project_id,
+            'group_id': self.group_id,
             'privilege': self.privilege,
             'provider_id': self.provider_id
         }
