@@ -206,7 +206,7 @@ class ResearchGroup(Base):
     __tablename__ = "research_group"
 
     id = Column(Integer, primary_key=True)
-    name = Column(Integer, unique=True)
+    name = Column(String, unique=True)
 
     lead_id = Column(Integer, ForeignKey(User.id))
     lead = relationship('User', backref='lead_group')
