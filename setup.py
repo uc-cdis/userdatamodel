@@ -4,7 +4,7 @@ setup(
     name='userdatamodel',
     packages=find_packages(),
     install_requires=[
-        'sqlalchemy==0.9.9',
+        'sqlalchemy==1.1.9',
     ],
     scripts=[
         'bin/userdatamodel-init',

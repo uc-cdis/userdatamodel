@@ -9,6 +9,8 @@ from sqlalchemy.dialects.postgres import ARRAY, JSONB
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.schema import ForeignKey
 from sqlalchemy.types import LargeBinary
+from sqlalchemy.util import OrderedDict
+from sqlalchemy.orm.collections import MappedCollection, collection
 import json
 
 user_group = Table(
@@ -16,6 +18,20 @@ user_group = Table(
     Column('user_id', Integer, ForeignKey('User.id')),
     Column('group_id', Integer, ForeignKey('research_group.id'))
 )
+
+class PrivilegeDict(MappedCollection):
+    def __init__(self):
+        MappedCollection.__init__(self, keyfunc=lambda node: node.project_id)
+
+    @collection.internally_instrumented
+    def __setitem__(self, key, value, _sa_initiator=None):
+        # do something with key, value
+        if self.has_key(key):
+            for item in value.privilege:
+                if item not in self[key].privilege:
+                    self[key].privilege.append(item)
+        else:
+            super(PrivilegeDict, self).__setitem__(key, value, _sa_initiator)
 
 
 class User(Base):
@@ -40,10 +56,14 @@ class User(Base):
         "ResearchGroup", secondary=user_group, backref='users')
 
     group_privileges = relationship(
-        "AccessPrivilege", primaryjoin="user_group.user_id==User.id",
-        secondary="join(access_privilege.group_id == user_group.group_id)"
+        "AccessPrivilege", primaryjoin="user_group.c.user_id==User.id",
+        secondary="join(AccessPrivilege, ResearchGroup, AccessPrivilege.group_id==ResearchGroup.id)."
+                  "join(user_group, ResearchGroup.id == user_group.c.group_id)",
+        collection_class=PrivilegeDict
     )
-    group_accesses = association_proxy("group_privileges", "privilege")
+    group_accesses = association_proxy("group_privileges",
+                                       "privilege",
+                                       creator=lambda k, v: AccessPrivilege(privilege=v, pj=k))
 
     active = Column(Boolean)
     is_admin = Column(Boolean, default=False)
@@ -72,7 +92,11 @@ class User(Base):
             'idp_id': self.idp_id,
             'department_id': self.department_id,
             'active': self.active,
-            'is_admin': self.is_admin
+            'is_admin': self.is_admin,
+            'group_privileges': str(self.group_privileges),
+            'group_accesses': str(self.group_accesses),
+            'projects': str(self.projects),
+            'project_access': str(self.project_access)
         }
         return json.dumps(str_out)
 
