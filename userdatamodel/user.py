@@ -2,10 +2,10 @@ from . import Base
 import datetime
 from sqlalchemy import (
     Integer, String, Column, Table, Boolean, BigInteger, DateTime, text)
-from sqlalchemy import UniqueConstraint
+from sqlalchemy import UniqueConstraint, Index
 from sqlalchemy.orm.collections import attribute_mapped_collection
 from sqlalchemy.ext.associationproxy import association_proxy
-from sqlalchemy.dialects.postgres import ARRAY, JSONB
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.schema import ForeignKey
 from sqlalchemy.types import LargeBinary
@@ -178,6 +178,12 @@ class AccessPrivilege(Base):
     __tablename__ = "access_privilege"
     __table_args__ = (
         UniqueConstraint("user_id", "group_id", "project_id", name='uniq_ap'),
+        Index("unique_group_project_id", "group_id", "project_id", unique=True,
+              postgresql_where=Column('user_id') is None),
+        Index("unique_user_project_id", "user_id", "project_id", unique=True,
+              postgresql_where=Column('group_id') is None),
+        Index("unique_user_group_id", "user_id", "group_id", unique=True,
+              postgresql_where=Column('project_id') is None)
     )
 
     id = Column(Integer, primary_key=True)
