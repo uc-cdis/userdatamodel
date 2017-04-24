@@ -180,11 +180,11 @@ class AccessPrivilege(Base):
     __table_args__ = (
         UniqueConstraint("user_id", "group_id", "project_id", name='uniq_ap'),
         Index("unique_group_project_id", "group_id", "project_id", unique=True,
-              postgresql_where=text('user_id != NULL')),
+              postgresql_where=text('user_id is NULL')),
         Index("unique_user_project_id", "user_id", "project_id", unique=True,
-              postgresql_where=text('group_id != NULL')),
+              postgresql_where=text('group_id is NULL')),
         Index("unique_user_group_id", "user_id", "group_id", unique=True,
-              postgresql_where=text('project_id != NULL'))
+              postgresql_where=text('project_id is NULL'))
     )
 
     id = Column(Integer, primary_key=True)
