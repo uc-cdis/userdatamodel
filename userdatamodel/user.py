@@ -10,6 +10,7 @@ from sqlalchemy.orm import relationship, backref
 from sqlalchemy.schema import ForeignKey
 from sqlalchemy.types import LargeBinary
 from sqlalchemy.util import OrderedDict
+from sqlalchemy.sql import text
 from sqlalchemy.orm.collections import MappedCollection, collection
 import json
 
@@ -179,11 +180,11 @@ class AccessPrivilege(Base):
     __table_args__ = (
         UniqueConstraint("user_id", "group_id", "project_id", name='uniq_ap'),
         Index("unique_group_project_id", "group_id", "project_id", unique=True,
-              postgresql_where=Column('user_id') is None),
+              postgresql_where=text('user_id != NULL')),
         Index("unique_user_project_id", "user_id", "project_id", unique=True,
-              postgresql_where=Column('group_id') is None),
+              postgresql_where=text('group_id != NULL')),
         Index("unique_user_group_id", "user_id", "group_id", unique=True,
-              postgresql_where=Column('project_id') is None)
+              postgresql_where=text('project_id != NULL'))
     )
 
     id = Column(Integer, primary_key=True)
