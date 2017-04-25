@@ -1,3 +1,6 @@
+ALTER TABLE project rename column dbgap_accession_number to auth_id;
+ALTER TABLE project add constraint uniq_auth_id UNIQUE(auth_id); 
+
 ALTER TABLE research_group ALTER COLUMN name TYPE varchar;
 ALTER TABLE user_access RENAME TO access_privilege;
 ALTER TABLE access_privilege
