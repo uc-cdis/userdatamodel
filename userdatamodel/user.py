@@ -21,6 +21,14 @@ user_group = Table(
 )
 
 class PrivilegeDict(MappedCollection):
+    '''
+    PrivilegeDict is used to populate the list of all privileges a user by the project_id.
+     User can have privilege access to a project via multiple groups, the list of privileges
+     of a user in a project should be a union of all groups that user belongs.
+      For example: user_1, group_1, project_1: [read-storage]
+                   user_1, group_2, project_1: [write-storage]
+                   --> user_1, project_1: [read-storage, write-storage]
+    '''
     def __init__(self):
         MappedCollection.__init__(self, keyfunc=lambda node: node.project_id)
 
