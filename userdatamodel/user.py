@@ -2,13 +2,16 @@ from . import Base
 import datetime
 from sqlalchemy import (
     Integer, String, Column, Table, Boolean, BigInteger, DateTime, text)
-from sqlalchemy import UniqueConstraint
+from sqlalchemy import UniqueConstraint, Index
 from sqlalchemy.orm.collections import attribute_mapped_collection
 from sqlalchemy.ext.associationproxy import association_proxy
-from sqlalchemy.dialects.postgres import ARRAY, JSONB
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.schema import ForeignKey
 from sqlalchemy.types import LargeBinary
+from sqlalchemy.util import OrderedDict
+from sqlalchemy.sql import text
+from sqlalchemy.orm.collections import MappedCollection, collection
 import json
 
 user_group = Table(
@@ -16,6 +19,28 @@ user_group = Table(
     Column('user_id', Integer, ForeignKey('User.id')),
     Column('group_id', Integer, ForeignKey('research_group.id'))
 )
+
+class PrivilegeDict(MappedCollection):
+    '''
+    PrivilegeDict is used to populate the list of all privileges a user by the project_id.
+     User can have privilege access to a project via multiple groups, the list of privileges
+     of a user in a project should be a union of all groups that user belongs.
+      For example: user_1, group_1, project_1: [read-storage]
+                   user_1, group_2, project_1: [write-storage]
+                   --> user_1, project_1: [read-storage, write-storage]
+    '''
+    def __init__(self):
+        MappedCollection.__init__(self, keyfunc=lambda node: node.project_id)
+
+    @collection.internally_instrumented
+    def __setitem__(self, key, value, _sa_initiator=None):
+        # do something with key, value
+        if self.has_key(key):
+            for item in value.privilege:
+                if item not in self[key].privilege:
+                    self[key].privilege.append(item)
+        else:
+            super(PrivilegeDict, self).__setitem__(key, value, _sa_initiator)
 
 
 class User(Base):
@@ -39,16 +64,27 @@ class User(Base):
     research_groups = relationship(
         "ResearchGroup", secondary=user_group, backref='users')
 
+    group_privileges = relationship(
+        "AccessPrivilege", primaryjoin="user_group.c.user_id==User.id",
+        secondary="join(AccessPrivilege, ResearchGroup, AccessPrivilege.group_id==ResearchGroup.id)."
+                  "join(user_group, ResearchGroup.id == user_group.c.group_id)",
+        collection_class=PrivilegeDict
+    )
+    group_accesses = association_proxy("group_privileges",
+                                       "privilege",
+                                       creator=lambda k, v: AccessPrivilege(privilege=v, pj=k))
+
     active = Column(Boolean)
     is_admin = Column(Boolean, default=False)
 
     projects = association_proxy(
-        "user_accesses",
+        "accesses_privilege",
         "project")
+
     project_access = association_proxy(
-        "user_accesses",
+        "accesses_privilege",
         "privilege",
-        creator=lambda k, v: UserAccess(privilege=v, pj=k)
+        creator=lambda k, v: AccessPrivilege(privilege=v, pj=k)
         )
 
     buckets = association_proxy(
@@ -65,7 +101,11 @@ class User(Base):
             'idp_id': self.idp_id,
             'department_id': self.department_id,
             'active': self.active,
-            'is_admin': self.is_admin
+            'is_admin': self.is_admin,
+            'group_privileges': str(self.group_privileges),
+            'group_accesses': str(self.group_accesses),
+            'projects': str(self.projects),
+            'project_access': str(self.project_access)
         }
         return json.dumps(str_out)
 
@@ -143,25 +183,33 @@ class HMACKeyPairArchive(Base):
     expire = Column(Integer)
 
 
-class UserAccess(Base):
-    __tablename__ = "user_access"
+class AccessPrivilege(Base):
+    __tablename__ = "access_privilege"
     __table_args__ = (
-        UniqueConstraint("user_id", "project_id", name='uniq_ua'),
+        UniqueConstraint("user_id", "group_id", "project_id", name='uniq_ap'),
+        Index("unique_group_project_id", "group_id", "project_id", unique=True,
+              postgresql_where=text('user_id is NULL')),
+        Index("unique_user_project_id", "user_id", "project_id", unique=True,
+              postgresql_where=text('group_id is NULL')),
+        Index("unique_user_group_id", "user_id", "group_id", unique=True,
+              postgresql_where=text('project_id is NULL'))
     )
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey(User.id))
     user = relationship(
-        User, backref=backref('user_accesses',
+        User, backref=backref('accesses_privilege',
         collection_class=attribute_mapped_collection("pj"))
     )
 
+    group_id = Column(Integer, ForeignKey('research_group.id'))
+    research_group = relationship('ResearchGroup', backref='accesses_privilege')
+
     project_id = Column(Integer, ForeignKey('project.id'))
-
-    project = relationship('Project', backref='user_accesses')
+    project = relationship('Project', backref='accesses_privilege')
     pj = association_proxy("project", "auth_id")
-    privilege = Column(ARRAY(String))
 
+    privilege = Column(ARRAY(String))
     provider_id = Column(Integer, ForeignKey('authorization_provider.id'))
     auth_provider = relationship('AuthorizationProvider', backref='acls')
 
@@ -170,6 +218,7 @@ class UserAccess(Base):
             'id': self.id,
             'user_id': self.user_id,
             'project_id': self.project_id,
+            'group_id': self.group_id,
             'privilege': self.privilege,
             'provider_id': self.provider_id
         }
@@ -196,7 +245,7 @@ class ResearchGroup(Base):
     __tablename__ = "research_group"
 
     id = Column(Integer, primary_key=True)
-    name = Column(Integer, unique=True)
+    name = Column(String, unique=True)
 
     lead_id = Column(Integer, ForeignKey(User.id))
     lead = relationship('User', backref='lead_group')

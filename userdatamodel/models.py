@@ -1,5 +1,5 @@
 from user import (
-    User, Project, ResearchGroup, UserAccess,
+    User, Project, ResearchGroup, AccessPrivilege,
     IdentityProvider, Application, Certificate,
     CloudProvider, StorageAccess, Bucket,
     ComputeAccess, UserToBucket,
