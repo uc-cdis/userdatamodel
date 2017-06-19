@@ -21,7 +21,12 @@ class SQLAlchemyDriver(object):
         Provide a transactional scope around a series of operations.
         '''
         session = self.Session()
-        yield session
+        try:
+            yield session
+        except:
+            session.rollback()
+            session.close()
+            raise
 
         try:
             session.commit()
