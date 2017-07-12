@@ -2,15 +2,13 @@ from . import Base
 import datetime
 from sqlalchemy import (
     Integer, String, Column, Table, Boolean, BigInteger, DateTime, text)
-from sqlalchemy import UniqueConstraint, Index
+from sqlalchemy import UniqueConstraint, Index, CheckConstraint
 from sqlalchemy.orm.collections import attribute_mapped_collection
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.schema import ForeignKey
 from sqlalchemy.types import LargeBinary
-from sqlalchemy.util import OrderedDict
-from sqlalchemy.sql import text
 from sqlalchemy.orm.collections import MappedCollection, collection
 import json
 
@@ -20,14 +18,17 @@ user_group = Table(
     Column('group_id', Integer, ForeignKey('research_group.id'))
 )
 
+
 class PrivilegeDict(MappedCollection):
     '''
-    PrivilegeDict is used to populate the list of all privileges a user by the project_id.
-     User can have privilege access to a project via multiple groups, the list of privileges
-     of a user in a project should be a union of all groups that user belongs.
-      For example: user_1, group_1, project_1: [read-storage]
-                   user_1, group_2, project_1: [write-storage]
-                   --> user_1, project_1: [read-storage, write-storage]
+    PrivilegeDict is used to populate the list of all privileges
+    a user by the project_id.
+    User can have privilege access to a project via multiple groups,
+    the list of privileges of a user in a project should be a union
+    of all groups that user belongs.
+    For example: user_1, group_1, project_1: [read-storage]
+                 user_1, group_2, project_1: [write-storage]
+                 --> user_1, project_1: [read-storage, write-storage]
     '''
     def __init__(self):
         MappedCollection.__init__(self, keyfunc=lambda node: node.project_id)
@@ -44,7 +45,7 @@ class PrivilegeDict(MappedCollection):
 
 
 class User(Base):
-    __tablename__ = "User"
+    __tablename__ = 'User'
 
     id = Column(Integer, primary_key=True)
     username = Column(String(40), unique=True)
@@ -62,34 +63,34 @@ class User(Base):
     department = relationship('Department', backref='users')
 
     research_groups = relationship(
-        "ResearchGroup", secondary=user_group, backref='users')
+        'ResearchGroup', secondary=user_group, backref='users')
 
     group_privileges = relationship(
-        "AccessPrivilege", primaryjoin="user_group.c.user_id==User.id",
-        secondary="join(AccessPrivilege, ResearchGroup, AccessPrivilege.group_id==ResearchGroup.id)."
-                  "join(user_group, ResearchGroup.id == user_group.c.group_id)",
+        'AccessPrivilege', primaryjoin='user_group.c.user_id==User.id',
+        secondary='join(AccessPrivilege, ResearchGroup, AccessPrivilege.group_id==ResearchGroup.id).'
+                  'join(user_group, ResearchGroup.id == user_group.c.group_id)',
         collection_class=PrivilegeDict
     )
-    group_accesses = association_proxy("group_privileges",
-                                       "privilege",
+    group_accesses = association_proxy('group_privileges',
+                                       'privilege',
                                        creator=lambda k, v: AccessPrivilege(privilege=v, pj=k))
 
     active = Column(Boolean)
     is_admin = Column(Boolean, default=False)
 
     projects = association_proxy(
-        "accesses_privilege",
-        "project")
+        'accesses_privilege',
+        'project')
 
     project_access = association_proxy(
-        "accesses_privilege",
-        "privilege",
+        'accesses_privilege',
+        'privilege',
         creator=lambda k, v: AccessPrivilege(privilege=v, pj=k)
         )
 
     buckets = association_proxy(
-        "user_to_buckets",
-        "bucket")
+        'user_to_buckets',
+        'bucket')
 
     application = relationship('Application', backref='user', uselist=False)
 
@@ -114,11 +115,11 @@ class User(Base):
 
 
 class HMACKeyPair(Base):
-    __tablename__ = "hmac_keypair"
+    __tablename__ = 'hmac_keypair'
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey(User.id))
-    user = relationship("User", backref="hmac_keypairs")
+    user = relationship('User', backref='hmac_keypairs')
 
     access_key = Column(String)
     # AES-128 encrypted
@@ -167,13 +168,13 @@ class HMACKeyPair(Base):
 
 class HMACKeyPairArchive(Base):
     '''
-    Archvie table to store expired or deleted keypair
+    Archive table to store expired or deleted keypair
     '''
-    __tablename__ = "hmac_keypair_archive"
+    __tablename__ = 'hmac_keypair_archive'
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey(User.id))
-    user = relationship("User", backref="archive_keypairs")
+    user = relationship('User', backref='archive_keypairs')
 
     access_key = Column(String)
     # AES-128 encrypted
@@ -184,22 +185,30 @@ class HMACKeyPairArchive(Base):
 
 
 class AccessPrivilege(Base):
-    __tablename__ = "access_privilege"
+    '''
+    A group/user's privileges on a project.
+    The group and user columns should be mutually exclusive
+    '''
+    __tablename__ = 'access_privilege'
     __table_args__ = (
-        UniqueConstraint("user_id", "group_id", "project_id", name='uniq_ap'),
-        Index("unique_group_project_id", "group_id", "project_id", unique=True,
+        UniqueConstraint('user_id', 'group_id', 'project_id', name='uniq_ap'),
+        CheckConstraint(
+            'user_id is NULL or group_id is NULL',
+            name='check_access_subject'),
+        Index('unique_group_project_id', 'group_id', 'project_id', unique=True,
               postgresql_where=text('user_id is NULL')),
-        Index("unique_user_project_id", "user_id", "project_id", unique=True,
+        Index('unique_user_project_id', 'user_id', 'project_id', unique=True,
               postgresql_where=text('group_id is NULL')),
-        Index("unique_user_group_id", "user_id", "group_id", unique=True,
+        Index('unique_user_group_id', 'user_id', 'group_id', unique=True,
               postgresql_where=text('project_id is NULL'))
     )
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey(User.id))
     user = relationship(
-        User, backref=backref('accesses_privilege',
-        collection_class=attribute_mapped_collection("pj"))
+        User,
+        backref=backref('accesses_privilege',
+                        collection_class=attribute_mapped_collection('pj'))
     )
 
     group_id = Column(Integer, ForeignKey('research_group.id'))
@@ -207,7 +216,7 @@ class AccessPrivilege(Base):
 
     project_id = Column(Integer, ForeignKey('project.id'))
     project = relationship('Project', backref='accesses_privilege')
-    pj = association_proxy("project", "auth_id")
+    pj = association_proxy('project', 'auth_id')
 
     privilege = Column(ARRAY(String))
     provider_id = Column(Integer, ForeignKey('authorization_provider.id'))
@@ -229,7 +238,7 @@ class AccessPrivilege(Base):
 
 
 class UserToBucket(Base):
-    __tablename__ = "user_to_bucket"
+    __tablename__ = 'user_to_bucket'
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey(User.id))
@@ -242,7 +251,7 @@ class UserToBucket(Base):
 
 
 class ResearchGroup(Base):
-    __tablename__ = "research_group"
+    __tablename__ = 'research_group'
 
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True)
@@ -258,8 +267,8 @@ class IdentityProvider(Base):
     name = Column(String, unique=True)
     description = Column(String)
 
-    google = "google"
-    itrust = "itrust"
+    google = 'google'
+    itrust = 'itrust'
 
 
 class AuthorizationProvider(Base):
@@ -278,8 +287,8 @@ class Bucket(Base):
     provider_id = Column(Integer, ForeignKey('cloud_provider.id'))
     provider = relationship('CloudProvider', backref='buckets')
     users = association_proxy(
-        "user_to_buckets",
-        "user")
+        'user_to_buckets',
+        'user')
 
 
 class CloudProvider(Base):
@@ -295,7 +304,7 @@ class CloudProvider(Base):
 
 
 class Project(Base):
-    __tablename__ = "project"
+    __tablename__ = 'project'
 
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True)
@@ -305,8 +314,8 @@ class Project(Base):
     parent_id = Column(Integer, ForeignKey('project.id'))
     parent = relationship('Project', backref='sub_projects', remote_side=[id])
     buckets = association_proxy(
-        "project_to_buckets",
-        "bucket")
+        'project_to_buckets',
+        'bucket')
 
     def __str__(self):
         str_out = {
@@ -323,7 +332,7 @@ class Project(Base):
 
 
 class ProjectToBucket(Base):
-    __tablename__ = "project_to_bucket"
+    __tablename__ = 'project_to_bucket'
 
     id = Column(Integer, primary_key=True)
     project_id = Column(Integer, ForeignKey('project.id'))
@@ -336,7 +345,7 @@ class ProjectToBucket(Base):
 
 
 class ComputeAccess(Base):
-    __tablename__ = "compute_access"
+    __tablename__ = 'compute_access'
 
     id = Column(Integer, primary_key=True)
 
@@ -361,11 +370,19 @@ class ComputeAccess(Base):
 
 
 class StorageAccess(Base):
-    __tablename__ = "storage_access"
+    '''
+    storage access from a project/research group/user to a cloud_provider
+    the project/group/user should be mutually exclusive
+    '''
+    __tablename__ = 'storage_access'
 
+    __table_args__ = (
+        CheckConstraint(
+            'user_id is NULL or group_id is NULL or project_id is NULL',
+            name='check_storage_subject'),
+    )
     id = Column(Integer, primary_key=True)
 
-    # storage access can be linked to a project/research group/user
     project_id = Column(Integer, ForeignKey('project.id'))
     project = relationship('Project', backref='storage_access')
 
@@ -385,7 +402,7 @@ class StorageAccess(Base):
 
 
 class EventLog(Base):
-    __tablename__ = "event_log"
+    __tablename__ = 'event_log'
 
     id = Column(Integer, primary_key=True)
     action = Column(String)
@@ -417,20 +434,20 @@ class Department(Base):
 # application related tables
 
 class Application(Base):
-    __tablename__ = "application"
+    __tablename__ = 'application'
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey(User.id))
-    resources_granted = Column(ARRAY(String))  # eg: ["compute", "storage"]
+    resources_granted = Column(ARRAY(String))  # eg: ['compute', 'storage']
     certificates_uploaded = relationship(
-        "Certificate",
+        'Certificate',
         backref='user',
     )
     message = Column(String)
 
 
 class Certificate(Base):
-    __tablename__ = "certificate"
+    __tablename__ = 'certificate'
 
     id = Column(Integer, primary_key=True)
     application_id = Column(Integer, ForeignKey('application.id'))
@@ -444,11 +461,11 @@ class Certificate(Base):
 
 
 class S3Credential(Base):
-    __tablename__ = "s3credential"
+    __tablename__ = 's3credential'
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey(User.id))
-    user = relationship("User", backref="s3credentials")
+    user = relationship('User', backref='s3credentials')
 
     access_key = Column(String)
 
