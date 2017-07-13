@@ -2,7 +2,8 @@ from . import Base
 from sqlalchemy.orm import sessionmaker
 from contextlib import contextmanager
 from sqlalchemy import create_engine
-from models import *
+from models import * # noqa
+
 
 class SQLAlchemyDriver(object):
     def __init__(self, conn, **config):
@@ -29,3 +30,23 @@ class SQLAlchemyDriver(object):
             raise
         finally:
             session.close()
+
+    def get_or_create(self, session, model, query, props=None):
+        '''
+        Get or create a row
+        Args:
+            session: sqlalchemy session
+            model: the ORM class from userdatamodel.models
+            query: a dict of query parameters
+            props: extra props aside from query to be added to the object on
+                   creation
+        Returns:
+            result object of the model class
+        '''
+        result = session.query(model).filter_by(**query).first()
+        if result is None:
+            args = props if props is not None else {}
+            args.update(query)
+            result = model(**args)
+            session.add(result)
+        return result
