@@ -75,6 +75,8 @@ class User(Base):
                                        'privilege',
                                        creator=lambda k, v: AccessPrivilege(privilege=v, pj=k))
 
+    google_group_id = Column(String(90))
+
     active = Column(Boolean)
     is_admin = Column(Boolean, default=False)
 
@@ -101,6 +103,7 @@ class User(Base):
             'id_from_idp': self.id_from_idp,
             'idp_id': self.idp_id,
             'department_id': self.department_id,
+            'google_group_id': self.google_group_id,
             'active': self.active,
             'is_admin': self.is_admin,
             'group_privileges': str(self.group_privileges),
