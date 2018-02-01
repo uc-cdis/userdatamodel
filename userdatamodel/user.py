@@ -12,12 +12,6 @@ from sqlalchemy.types import LargeBinary
 from sqlalchemy.orm.collections import MappedCollection, collection
 import json
 
-user_group = Table(
-    'user_group', Base.metadata,
-    Column('user_id', Integer, ForeignKey('User.id')),
-    Column('group_id', Integer, ForeignKey('research_group.id'))
-)
-
 
 class PrivilegeDict(MappedCollection):
     '''
@@ -62,13 +56,14 @@ class User(Base):
     department_id = Column(Integer, ForeignKey('department.id'))
     department = relationship('Department', backref='users')
 
-    research_groups = relationship(
-        'ResearchGroup', secondary=user_group, backref='users')
+    groups = association_proxy(
+        'user_to_groups',
+        'group')
 
     group_privileges = relationship(
-        'AccessPrivilege', primaryjoin='user_group.c.user_id==User.id',
-        secondary='join(AccessPrivilege, ResearchGroup, AccessPrivilege.group_id==ResearchGroup.id).'
-                  'join(user_group, ResearchGroup.id == user_group.c.group_id)',
+        'AccessPrivilege', primaryjoin='user_to_group.c.user_id==User.id',
+        secondary='join(AccessPrivilege, Group, AccessPrivilege.group_id==Group.id).'
+                  'join(user_to_group, Group.id == user_to_group.c.group_id)',
         collection_class=PrivilegeDict
     )
     group_accesses = association_proxy('group_privileges',
@@ -184,6 +179,20 @@ class HMACKeyPairArchive(Base):
     expire = Column(Integer)
 
 
+class UserToGroup(Base):
+    '''
+    Edge table between user and group
+    '''
+    __tablename__ = 'user_to_group'
+    user_id = Column('user_id', Integer, ForeignKey('User.id'), primary_key=True)
+    user = relationship(User, backref='user_to_groups')
+
+    group_id = Column('group_id', Integer, ForeignKey('Group.id'), primary_key=True)
+    group = relationship('Group', backref='user_to_groups')
+
+    roles = Column('roles', ARRAY(String))
+
+
 class AccessPrivilege(Base):
     '''
     A group/user's privileges on a project.
@@ -211,8 +220,8 @@ class AccessPrivilege(Base):
                         collection_class=attribute_mapped_collection('pj'))
     )
 
-    group_id = Column(Integer, ForeignKey('research_group.id'))
-    research_group = relationship('ResearchGroup', backref='accesses_privilege')
+    group_id = Column(Integer, ForeignKey('Group.id'))
+    group = relationship('Group', backref='accesses_privilege')
 
     project_id = Column(Integer, ForeignKey('project.id'))
     project = relationship('Project', backref='accesses_privilege')
@@ -250,14 +259,16 @@ class UserToBucket(Base):
     privilege = Column(ARRAY(String))
 
 
-class ResearchGroup(Base):
-    __tablename__ = 'research_group'
+class Group(Base):
+    __tablename__ = 'Group'
 
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True)
 
-    lead_id = Column(Integer, ForeignKey(User.id))
-    lead = relationship('User', backref='lead_group')
+
+    users = association_proxy(
+        'user_to_groups',
+        'user')
 
 
 class IdentityProvider(Base):
@@ -356,8 +367,8 @@ class ComputeAccess(Base):
     user_id = Column(Integer, ForeignKey(User.id))
     user = relationship('User', backref='compute_access')
 
-    group_id = Column(Integer, ForeignKey('research_group.id'))
-    research_group = relationship('ResearchGroup', backref='compute_access')
+    group_id = Column(Integer, ForeignKey('Group.id'))
+    group = relationship('Group', backref='compute_access')
 
     provider_id = Column(Integer, ForeignKey('cloud_provider.id'))
     provider = relationship('CloudProvider', backref='compute_access')
@@ -389,8 +400,8 @@ class StorageAccess(Base):
     user_id = Column(Integer, ForeignKey(User.id))
     user = relationship('User', backref='storage_access')
 
-    group_id = Column(Integer, ForeignKey('research_group.id'))
-    research_group = relationship('ResearchGroup', backref='storage_access')
+    group_id = Column(Integer, ForeignKey('Group.id'))
+    group = relationship('Group', backref='storage_access')
 
     provider_id = Column(Integer, ForeignKey('cloud_provider.id'))
     provider = relationship('CloudProvider', backref='storage_access')
