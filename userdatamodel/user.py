@@ -264,6 +264,7 @@ class Group(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True)
+    description = Column(String)
 
 
     users = association_proxy(
