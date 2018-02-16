@@ -279,8 +279,9 @@ class IdentityProvider(Base):
     name = Column(String, unique=True)
     description = Column(String)
 
-    google = 'google'
-    itrust = 'itrust'
+    google = "google"
+    itrust = "itrust"
+    fence = "fence"
 
 
 class AuthorizationProvider(Base):

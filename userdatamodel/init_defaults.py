@@ -1,5 +1,5 @@
 from user import IdentityProvider
-IDENTITY_PROVIDERS = ['google', 'itrust']
+IDENTITY_PROVIDERS = ['google', 'itrust', 'fence']
 
 
 def init_defaults(db):
