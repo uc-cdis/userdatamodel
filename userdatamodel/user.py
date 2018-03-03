@@ -64,7 +64,7 @@ class User(Base):
         'AccessPrivilege', primaryjoin='user_to_group.c.user_id==User.id',
         secondary='join(AccessPrivilege, Group, AccessPrivilege.group_id==Group.id).'
                   'join(user_to_group, Group.id == user_to_group.c.group_id)',
-        collection_class=PrivilegeDict
+        collection_class=PrivilegeDict,
     )
     group_accesses = association_proxy('group_privileges',
                                        'privilege',
@@ -185,10 +185,16 @@ class UserToGroup(Base):
     '''
     __tablename__ = 'user_to_group'
     user_id = Column('user_id', Integer, ForeignKey('User.id'), primary_key=True)
-    user = relationship(User, backref='user_to_groups')
+    user = relationship(
+        User,
+        backref=backref('user_to_groups', cascade='all, delete-orphan')
+    )
 
     group_id = Column('group_id', Integer, ForeignKey('Group.id'), primary_key=True)
-    group = relationship('Group', backref='user_to_groups')
+    group = relationship(
+        'Group',
+        backref=backref('user_to_groups', cascade='all, delete-orphan')
+    )
 
     roles = Column('roles', ARRAY(String))
 
@@ -217,14 +223,22 @@ class AccessPrivilege(Base):
     user = relationship(
         User,
         backref=backref('accesses_privilege',
-                        collection_class=attribute_mapped_collection('pj'))
+                        collection_class=attribute_mapped_collection('pj'),
+                        cascade="all, delete-orphan",
+                        )
     )
 
     group_id = Column(Integer, ForeignKey('Group.id'))
-    group = relationship('Group', backref='accesses_privilege')
+    group = relationship(
+        'Group',
+        backref=backref('accesses_privilege', cascade='all, delete-orphan')
+    )
 
     project_id = Column(Integer, ForeignKey('project.id'))
-    project = relationship('Project', backref='accesses_privilege')
+    project = relationship(
+        'Project',
+        backref=backref('accesses_privilege', cascade='all, delete-orphan')
+    )
     pj = association_proxy('project', 'auth_id')
 
     privilege = Column(ARRAY(String))
@@ -251,11 +265,17 @@ class UserToBucket(Base):
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey(User.id))
-    user = relationship(User, backref='user_to_buckets')
+    user = relationship(
+        User,
+        backref=backref('user_to_buckets', cascade='all, delete-orphan')
+    )
 
     bucket_id = Column(Integer, ForeignKey('bucket.id'))
 
-    bucket = relationship('Bucket', backref='user_to_buckets')
+    bucket = relationship(
+        'Bucket',
+        backref=backref('user_to_buckets', cascade='all, delete-orphan')
+    )
     privilege = Column(ARRAY(String))
 
 
@@ -265,7 +285,6 @@ class Group(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True)
     description = Column(String)
-
 
     users = association_proxy(
         'user_to_groups',
@@ -349,7 +368,10 @@ class ProjectToBucket(Base):
 
     id = Column(Integer, primary_key=True)
     project_id = Column(Integer, ForeignKey('project.id'))
-    project = relationship(Project, backref='project_to_buckets')
+    project = relationship(
+        Project,
+        backref=backref('project_to_buckets', cascade='all, delete-orphan')
+    )
 
     bucket_id = Column(Integer, ForeignKey('bucket.id'))
 
