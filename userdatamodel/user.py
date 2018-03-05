@@ -56,6 +56,17 @@ class User(Base):
     department_id = Column(Integer, ForeignKey('department.id'))
     department = relationship('Department', backref='users')
 
+    created_timestamp = Column(
+            DateTime,
+            nullable=False,
+            default=datetime.datetime.utcnow)
+
+    updated_timestamp = Column(
+            DateTime,
+            nullable=False,
+            default=datetime.datetime.utcnow,
+            onupdate=datetime.datetime.utcnow)
+
     groups = association_proxy(
         'user_to_groups',
         'group')
@@ -101,7 +112,9 @@ class User(Base):
             'group_privileges': str(self.group_privileges),
             'group_accesses': str(self.group_accesses),
             'projects': str(self.projects),
-            'project_access': str(self.project_access)
+            'project_access': str(self.project_access),
+            'created_datetime': str(self.created_datetime),
+            'updated_datetime': str(self.updated_datetime)
         }
         return json.dumps(str_out)
 
