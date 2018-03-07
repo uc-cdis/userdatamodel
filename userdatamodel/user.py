@@ -54,10 +54,11 @@ class User(Base):
     identity_provider = relationship('IdentityProvider', backref='users')
 
     google_proxy_group_id = Column(
-        String(90), ForeignKey('google_proxy_group.id'))
+        String, ForeignKey('google_proxy_group.id'))
 
     google_proxy_group = relationship(
-        'GoogleProxyGroup', backref=backref(__tablename__, uselist=False))
+        'GoogleProxyGroup', backref=backref(
+            __tablename__, uselist=False, cascade='all, delete-orphan'))
 
     department_id = Column(Integer, ForeignKey('department.id'))
     department = relationship('Department', backref='users')
