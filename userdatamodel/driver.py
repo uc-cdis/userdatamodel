@@ -2,6 +2,9 @@ from . import Base
 from sqlalchemy.orm import sessionmaker
 from contextlib import contextmanager
 from sqlalchemy import create_engine
+from sqlalchemy import (
+    String, Column, MetaData, Table
+)
 from models import * # noqa
 
 
@@ -13,7 +16,7 @@ class SQLAlchemyDriver(object):
         self.Session = sessionmaker(bind=self.engine, expire_on_commit=False)
         self.pre_migrate()
         Base.metadata.create_all()
-
+        self.post_migrate()
 
     @property
     @contextmanager
@@ -26,7 +29,7 @@ class SQLAlchemyDriver(object):
 
         try:
             session.commit()
-        except:
+        except Exception:
             session.rollback()
             raise
         finally:
@@ -67,3 +70,101 @@ class SQLAlchemyDriver(object):
             print("Altering table research_group to group")
             with self.session as session:
                 session.execute('ALTER TABLE research_group rename to "Group"')
+
+    def post_migrate(self):
+        md = MetaData()
+        add_foreign_key_column_if_not_exist(
+            table_name=User.__tablename__,
+            column_name='google_proxy_group_id',
+            column_type=String,
+            fk_table_name=GoogleProxyGroup.__tablename__,
+            fk_column_name='id',
+            driver=self,
+            metadata=md
+        )
+
+
+def add_foreign_key_column_if_not_exist(
+        table_name, column_name, column_type, fk_table_name, fk_column_name,
+        driver, metadata):
+    column = Column(column_name, column_type)
+    add_column_if_not_exist(
+        table_name, column, driver, metadata)
+    add_foreign_key_constraint_if_not_exist(
+        table_name, column_name, fk_table_name, fk_column_name, driver,
+        metadata)
+
+
+def drop_foreign_key_column_if_exist(table_name, column_name, driver, metadata):
+    drop_foreign_key_constraint_if_exist(
+        table_name, column_name, driver, metadata)
+    drop_column_if_exist(table_name, column_name, driver, metadata)
+
+
+def add_column_if_not_exist(
+        table_name, column, driver, metadata):
+    column_name = column.compile(dialect=driver.engine.dialect)
+    column_type = column.type.compile(driver.engine.dialect)
+
+    table = Table(
+        table_name, metadata, autoload=True, autoload_with=driver.engine)
+    if str(column_name) not in table.c:
+        with driver.session as session:
+            session.execute(
+                "ALTER TABLE \"{}\" ADD COLUMN {} {};"
+                .format(table_name, column_name, column_type)
+            )
+            session.commit()
+
+
+def drop_column_if_exist(table_name, column_name, driver, metadata):
+    table = Table(
+        table_name, metadata, autoload=True, autoload_with=driver.engine)
+    if column_name in table.c:
+        with driver.session as session:
+            session.execute(
+                "ALTER TABLE \"{}\" DROP COLUMN {};"
+                .format(table_name, column_name)
+            )
+            session.commit()
+
+
+def add_foreign_key_constraint_if_not_exist(
+        table_name, column_name, fk_table_name, fk_column_name,
+        driver, metadata):
+    table = Table(
+        table_name, metadata, autoload=True, autoload_with=driver.engine)
+    foreign_key_name = "{}_{}_fkey".format(table_name.lower(), column_name)
+
+    if column_name in table.c:
+        foreign_keys = [
+            fk.name for fk in getattr(table.c, column_name).foreign_keys]
+        if foreign_key_name not in foreign_keys:
+            with driver.session as session:
+                session.execute(
+                    "ALTER TABLE \"{}\" ADD CONSTRAINT {} "
+                    "FOREIGN KEY({}) REFERENCES {} ({});"
+                    .format(
+                        table_name, foreign_key_name, column_name,
+                        fk_table_name, fk_column_name
+                    )
+                )
+                session.commit()
+
+
+def drop_foreign_key_constraint_if_exist(
+        table_name, column_name, driver, metadata):
+    table = Table(
+        table_name, metadata, autoload=True, autoload_with=driver.engine)
+    foreign_key_name = "{}_{}_fkey".format(table_name.lower(), column_name)
+
+    if column_name in table.c:
+        foreign_keys = [
+            fk.name for fk in getattr(table.c, column_name).foreign_keys]
+        if foreign_key_name in foreign_keys:
+            with driver.session as session:
+                session.execute(
+                    "ALTER TABLE \"{}\" DROP CONSTRAINT {};"
+                    .format(table_name, foreign_key_name)
+                )
+                session.commit()

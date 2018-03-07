@@ -53,6 +53,13 @@ class User(Base):
     idp_id = Column(Integer, ForeignKey('identity_provider.id'))
     identity_provider = relationship('IdentityProvider', backref='users')
 
+    google_proxy_group_id = Column(
+        String, ForeignKey('google_proxy_group.id'))
+
+    google_proxy_group = relationship(
+        'GoogleProxyGroup', backref=backref(
+            __tablename__, uselist=False, cascade='all, delete-orphan'))
+
     department_id = Column(Integer, ForeignKey('department.id'))
     department = relationship('Department', backref='users')
 
@@ -107,6 +114,18 @@ class User(Base):
 
     def __repr__(self):
         return self.__str__()
+
+
+class GoogleProxyGroup(Base):
+    __tablename__ = "google_proxy_group"
+
+    id = Column(String(90), primary_key=True)
+
+    email = Column(
+        String,
+        unique=True,
+        nullable=False
+    )
 
 
 class HMACKeyPair(Base):

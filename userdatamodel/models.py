@@ -1,5 +1,5 @@
 from user import (
-    User, Project, Group, UserToGroup, AccessPrivilege,
+    User, GoogleProxyGroup, Project, Group, UserToGroup, AccessPrivilege,
     IdentityProvider, Application, Certificate,
     CloudProvider, StorageAccess, Bucket,
     ComputeAccess, UserToBucket,
