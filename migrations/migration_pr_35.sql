@@ -1,2 +1,0 @@
-ALTER TABLE "User" ADD COLUMN google_proxy_group_id character varying;
-ALTER TABLE "User" ADD CONSTRAINT user_google_proxy_group_id_fkey FOREIGN KEY(google_proxy_group_id) REFERENCES google_proxy_group (id);
