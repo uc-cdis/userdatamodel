@@ -1,8 +1,11 @@
 from . import Base
 from sqlalchemy.orm import sessionmaker
 from contextlib import contextmanager
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, MetaData, Table, Column
+from sqlalchemy.types import DateTime
 from models import * # noqa
+
+import datetime
 
 
 class SQLAlchemyDriver(object):
@@ -13,7 +16,7 @@ class SQLAlchemyDriver(object):
         self.Session = sessionmaker(bind=self.engine, expire_on_commit=False)
         self.pre_migrate()
         Base.metadata.create_all()
-
+        self.post_migrate()
 
     @property
     @contextmanager
@@ -67,3 +70,35 @@ class SQLAlchemyDriver(object):
             print("Altering table research_group to group")
             with self.session as session:
                 session.execute('ALTER TABLE research_group rename to "Group"')
+
+    def post_migrate(self):
+        '''
+        migration function to be run after create_all
+        '''
+        md = MetaData()
+        user_table = Table(
+            User.__tablename__,
+            md,
+            autoload=True,
+            autoload_with=self.engine
+        )
+        if '_created_datetime' not in user_table.c:
+            print "Altering table {} to add created_datetime column"
+            c_col = Column(
+                'created_datetime',
+                DateTime,
+                default=datetime.datetime.utcnow,
+                nullable=False
+            )
+            c_col.create(user_table, populate_default=True)
+
+        if '_updated_datetime' not in user_table.c:
+            print "Altering table {} to add updated_datetime column"
+            u_col = Column(
+                'updated_datetime',
+                DateTime,
+                default=datetime.datetime.utcnow,
+                onupdate=datetime.datetime.utcnow,
+                nullable=False
+            )
+            u_col.create(user_table, populate_default=True)

@@ -10,6 +10,7 @@ from sqlalchemy.orm import relationship, backref
 from sqlalchemy.schema import ForeignKey
 from sqlalchemy.types import LargeBinary
 from sqlalchemy.orm.collections import MappedCollection, collection
+from sqlalchemy.sql import func
 import json
 
 
@@ -113,8 +114,8 @@ class User(Base):
             'group_accesses': str(self.group_accesses),
             'projects': str(self.projects),
             'project_access': str(self.project_access),
-            'created_datetime': str(self.created_datetime),
-            'updated_datetime': str(self.updated_datetime)
+            'created_datetime': self.created_datetime,
+            'updated_datetime': self.updated_datetime
         }
         return json.dumps(str_out)
 
