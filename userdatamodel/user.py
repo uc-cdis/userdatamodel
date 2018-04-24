@@ -24,6 +24,7 @@ class PrivilegeDict(MappedCollection):
                  user_1, group_2, project_1: [write-storage]
                  --> user_1, project_1: [read-storage, write-storage]
     '''
+
     def __init__(self):
         MappedCollection.__init__(self, keyfunc=lambda node: node.project_id)
 
@@ -48,6 +49,9 @@ class User(Base):
     # across all identifiers.
     # For most of the cases, it will be same as username
     id_from_idp = Column(String)
+    first_name = Column(String)
+    last_name = Column(String)
+    phone_number = Column(String)
     email = Column(String)
 
     idp_id = Column(Integer, ForeignKey('identity_provider.id'))
@@ -88,7 +92,7 @@ class User(Base):
         'accesses_privilege',
         'privilege',
         creator=lambda k, v: AccessPrivilege(privilege=v, pj=k)
-        )
+    )
 
     buckets = association_proxy(
         'user_to_buckets',
@@ -526,3 +530,15 @@ class S3Credential(Base):
     timestamp = Column(
         DateTime, nullable=False, default=datetime.datetime.utcnow)
     expire = Column(Integer)
+
+
+class Tag(Base):
+    __tablename__ = 'tag'
+
+    user_id = Column(Integer, ForeignKey(User.id), primary_key=True)
+    key = Column(String, primary_key=True)
+    value = Column(String, primary_key=True)
+    user = relationship(
+        'User', 
+        backref=backref('tags', cascade='all, delete-orphan')
+    )

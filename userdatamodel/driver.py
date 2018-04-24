@@ -83,6 +83,15 @@ class SQLAlchemyDriver(object):
             metadata=md
         )
 
+        col_names = ['first_name', 'last_name', 'phone_number']
+        for col in col_names:
+            add_column_if_not_exist(
+                table_name=User.__tablename__,
+                column=Column(col, String),
+                driver=self,
+                metadata=md
+        )
+
 
 def add_foreign_key_column_if_not_exist(
         table_name, column_name, column_type, fk_table_name, fk_column_name,
