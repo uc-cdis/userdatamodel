@@ -537,7 +537,7 @@ class Tag(Base):
 
     user_id = Column(Integer, ForeignKey(User.id), primary_key=True)
     key = Column(String, primary_key=True)
-    value = Column(String, primary_key=True)
+    value = Column(String)
     user = relationship(
         'User', 
         backref=backref('tags', cascade='all, delete-orphan')
