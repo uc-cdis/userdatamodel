@@ -83,7 +83,7 @@ class SQLAlchemyDriver(object):
             metadata=md
         )
 
-        col_names = ['first_name', 'last_name', 'phone_number']
+        col_names = ['display_name', 'phone_number']
         for col in col_names:
             add_column_if_not_exist(
                 table_name=User.__tablename__,
