@@ -49,8 +49,7 @@ class User(Base):
     # across all identifiers.
     # For most of the cases, it will be same as username
     id_from_idp = Column(String)
-    first_name = Column(String)
-    last_name = Column(String)
+    display_name = Column(String)
     phone_number = Column(String)
     email = Column(String)
 
