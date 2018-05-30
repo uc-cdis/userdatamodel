@@ -1,7 +1,8 @@
 from . import Base
 import datetime
 from sqlalchemy import (
-    Integer, String, Column, Table, Boolean, BigInteger, DateTime, text)
+    Integer, String, Column, Table, Boolean, BigInteger, DateTime, Text, text
+)
 from sqlalchemy import UniqueConstraint, Index, CheckConstraint
 from sqlalchemy.orm.collections import attribute_mapped_collection
 from sqlalchemy.ext.associationproxy import association_proxy
@@ -39,7 +40,55 @@ class PrivilegeDict(MappedCollection):
             super(PrivilegeDict, self).__setitem__(key, value, _sa_initiator)
 
 
+#: ``users_to_policies`` represents a many-to-many mapping between policies (in
+#: the RBAC system) and users (in the user data model).
+users_to_policies = Table(
+    'users_to_policies',
+    Base.metadata,
+    Column('user_id', Integer, ForeignKey('User.id')),
+    Column('policy_id', String, ForeignKey('policy.ID')),
+)
+
+
+class Policy(Base):
+    """
+    The ``Policy`` table tracks policies granted by arborist, the RBAC system,
+    and maps to users in fence through the `users_to_policies` table.
+    """
+
+    __tablename__ = 'policy'
+
+    ID = Column(Text, primary_key=True, unique=True)
+    _role_ids = Column(Text)
+    _resource_paths = Column(Text)
+
+    def __init__(self, **kwargs):
+        """
+        To construct a ``Policy``, Convert the lists of role IDs and resource
+        IDs to string serializations where the values are separated by spaces.
+
+        Each has an associated property to read out the values correctly to a
+        list.
+        """
+        if 'role_ids' in kwargs:
+            role_ids = kwargs.pop('role_ids')
+            kwargs['role_ids'] = ' '.join(role_ids)
+        if 'resource_paths' in kwargs:
+            resource_paths = kwargs.pop('resource_paths')
+            kwargs['resource_paths'] = ' '.join(resource_paths)
+        super(Policy, self).__init__(**kwargs)
+
+    @property
+    def role_ids(self):
+        return self._role_ids.split(' ')
+
+    @property
+    def resource_paths(self):
+        return self._resource_paths.split(' ')
+
+
 class User(Base):
+
     __tablename__ = 'User'
 
     id = Column(Integer, primary_key=True)
@@ -52,6 +101,8 @@ class User(Base):
     display_name = Column(String)
     phone_number = Column(String)
     email = Column(String)
+
+    policies = relationship('Policy', secondary=users_to_policies)
 
     idp_id = Column(Integer, ForeignKey('identity_provider.id'))
     identity_provider = relationship('IdentityProvider', backref='users')
@@ -538,6 +589,6 @@ class Tag(Base):
     key = Column(String, primary_key=True)
     value = Column(String)
     user = relationship(
-        'User', 
+        'User',
         backref=backref('tags', cascade='all, delete-orphan')
     )
