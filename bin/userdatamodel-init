@@ -7,7 +7,9 @@ from userdatamodel.driver import SQLAlchemyDriver
 
 def main(**kwargs):
     db = SQLAlchemyDriver(
-        "postgresql://{username}:{password}@{host}/{db}".format(**kwargs))
+        "postgresql://{username}:{password}@{host}/{db}".format(**kwargs),
+        ignore_db_error=False,
+        )
     print 'initializing database'
     init_defaults(db)
 

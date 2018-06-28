@@ -5,6 +5,7 @@ setup(
     packages=find_packages(),
     install_requires=[
         'sqlalchemy==0.9.9',
+        'cdislogging',
     ],
     scripts=[
         'bin/userdatamodel-init',

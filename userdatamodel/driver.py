@@ -1,4 +1,5 @@
 from . import Base
+from cdislogging import get_logger
 from sqlalchemy.orm import sessionmaker
 from contextlib import contextmanager
 from sqlalchemy import create_engine
@@ -9,11 +10,32 @@ from models import * # noqa
 
 
 class SQLAlchemyDriver(object):
-    def __init__(self, conn, **config):
+    def __init__(self, conn, ignore_db_error=True, **config):
+        """
+        setup sqlalchemy engine and session
+        Args:
+            conn (str): database connection
+            ignore_db_error (bool): whether to ignore database setup error,
+                default to True because it errors out whenever you start
+                multiple servers in parallel for new db
+            config (dict): engine configuration
+        """
         self.engine = create_engine(conn, **config)
+        self.logger = get_logger('SQLAlchemyDriver')
 
         Base.metadata.bind = self.engine
         self.Session = sessionmaker(bind=self.engine, expire_on_commit=False)
+        if ignore_db_error:
+            try:
+                self.setup_db()
+            except Exception:
+                self.logger.exception(
+                    'Fail to setup database tables, continue anyways')
+                pass
+        else:
+            self.setup_db()
+
+    def setup_db(self):
         self.pre_migrate()
         Base.metadata.create_all()
         self.post_migrate()
