@@ -58,7 +58,7 @@ class Policy(Base):
 
     __tablename__ = 'policy'
 
-    ID = Column(Text, primary_key=True, unique=True)
+    id = Column(Text, primary_key=True, unique=True)
     _role_ids = Column(Text)
     _resource_paths = Column(Text)
 
@@ -72,9 +72,13 @@ class Policy(Base):
         """
         if 'role_ids' in kwargs:
             role_ids = kwargs.pop('role_ids')
+            if any(' ' in role_id for role_id in role_ids):
+                raise ValueError('role IDs may not contain spaces')
             kwargs['role_ids'] = ' '.join(role_ids)
         if 'resource_paths' in kwargs:
             resource_paths = kwargs.pop('resource_paths')
+            if any(' ' in path for path in resource_paths):
+                raise ValueError('resource paths may not contain spaces')
             kwargs['resource_paths'] = ' '.join(resource_paths)
         super(Policy, self).__init__(**kwargs)
 
