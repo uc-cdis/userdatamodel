@@ -46,7 +46,7 @@ users_to_policies = Table(
     'users_to_policies',
     Base.metadata,
     Column('user_id', Integer, ForeignKey('User.id')),
-    Column('policy_id', String, ForeignKey('policy.ID')),
+    Column('policy_id', String, ForeignKey('policy.id')),
 )
 
 
