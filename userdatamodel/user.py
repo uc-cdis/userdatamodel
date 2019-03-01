@@ -81,9 +81,8 @@ class User(Base):
     google_proxy_group_id = Column(String, ForeignKey("google_proxy_group.id"))
 
     google_proxy_group = relationship(
-        "GoogleProxyGroup",
-        backref=backref(__tablename__, uselist=False, cascade="all, delete-orphan"),
-    )
+        'GoogleProxyGroup', backref=backref(
+            __tablename__, uselist=False, cascade='save-update, merge, refresh-expire, expunge'))
 
     department_id = Column(Integer, ForeignKey("department.id"))
     department = relationship("Department", backref="users")
