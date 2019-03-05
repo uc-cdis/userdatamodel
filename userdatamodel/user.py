@@ -81,8 +81,13 @@ class User(Base):
     google_proxy_group_id = Column(String, ForeignKey("google_proxy_group.id"))
 
     google_proxy_group = relationship(
-        'GoogleProxyGroup', backref=backref(
-            __tablename__, uselist=False, cascade='save-update, merge, refresh-expire, expunge'))
+        "GoogleProxyGroup",
+        backref=backref(
+            __tablename__,
+            uselist=False,
+            cascade="save-update, merge, refresh-expire, expunge",
+        ),
+    )
 
     department_id = Column(Integer, ForeignKey("department.id"))
     department = relationship("Department", backref="users")
@@ -160,10 +165,12 @@ class HMACKeyPair(Base):
     __tablename__ = "hmac_keypair"
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey(User.id, ondelete='CASCADE'))
+    user_id = Column(Integer, ForeignKey(User.id, ondelete="CASCADE"))
     user = relationship(
-            'User',
-            backref=backref('hmac_keypairs', cascade="all, delete-orphan", passive_deletes=True),
+        "User",
+        backref=backref(
+            "hmac_keypairs", cascade="all, delete-orphan", passive_deletes=True
+        ),
     )
 
     access_key = Column(String)
@@ -220,10 +227,12 @@ class HMACKeyPairArchive(Base):
     __tablename__ = "hmac_keypair_archive"
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey(User.id, ondelete='CASCADE'))
+    user_id = Column(Integer, ForeignKey(User.id, ondelete="CASCADE"))
     user = relationship(
-            'User',
-            backref=backref('archive_keypairs', cascade="all, delete-orphan", passive_deletes=True),
+        "User",
+        backref=backref(
+            "archive_keypairs", cascade="all, delete-orphan", passive_deletes=True
+        ),
     )
 
     access_key = Column(String)
@@ -238,17 +247,29 @@ class UserToGroup(Base):
     """
     Edge table between user and group
     """
-    __tablename__ = 'user_to_group'
-    user_id = Column('user_id', Integer, ForeignKey('User.id', ondelete='CASCADE'), primary_key=True)
+
+    __tablename__ = "user_to_group"
+    user_id = Column(
+        "user_id", Integer, ForeignKey("User.id", ondelete="CASCADE"), primary_key=True
+    )
     user = relationship(
         User,
-        backref=backref('user_to_groups', cascade='all, delete-orphan', passive_deletes=True),
+        backref=backref(
+            "user_to_groups", cascade="all, delete-orphan", passive_deletes=True
+        ),
     )
 
-    group_id = Column('group_id', Integer, ForeignKey('Group.id', ondelete='CASCADE'), primary_key=True)
+    group_id = Column(
+        "group_id",
+        Integer,
+        ForeignKey("Group.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
     group = relationship(
-        'Group',
-        backref=backref('user_to_groups', cascade='all, delete-orphan', passive_deletes=True),
+        "Group",
+        backref=backref(
+            "user_to_groups", cascade="all, delete-orphan", passive_deletes=True
+        ),
     )
 
     roles = Column("roles", ARRAY(String))
@@ -290,35 +311,41 @@ class AccessPrivilege(Base):
     )
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey(User.id, ondelete='CASCADE'))
+    user_id = Column(Integer, ForeignKey(User.id, ondelete="CASCADE"))
     user = relationship(
         User,
         backref=backref(
-            'accesses_privilege',
-            collection_class=attribute_mapped_collection('pj'),
+            "accesses_privilege",
+            collection_class=attribute_mapped_collection("pj"),
             cascade="all, delete-orphan",
             passive_deletes=True,
         ),
     )
 
-    group_id = Column(Integer, ForeignKey('Group.id', ondelete='CASCADE'))
+    group_id = Column(Integer, ForeignKey("Group.id", ondelete="CASCADE"))
     group = relationship(
-        'Group',
-        backref=backref('accesses_privilege', cascade='all, delete-orphan', passive_deletes=True),
+        "Group",
+        backref=backref(
+            "accesses_privilege", cascade="all, delete-orphan", passive_deletes=True
+        ),
     )
 
-    project_id = Column(Integer, ForeignKey('project.id', ondelete='CASCADE'))
+    project_id = Column(Integer, ForeignKey("project.id", ondelete="CASCADE"))
     project = relationship(
-        'Project',
-        backref=backref('accesses_privilege', cascade='all, delete-orphan', passive_deletes=True),
+        "Project",
+        backref=backref(
+            "accesses_privilege", cascade="all, delete-orphan", passive_deletes=True
+        ),
     )
     pj = association_proxy("project", "auth_id")
 
     privilege = Column(ARRAY(String))
-    provider_id = Column(Integer, ForeignKey('authorization_provider.id', ondelete='CASCADE'))
+    provider_id = Column(
+        Integer, ForeignKey("authorization_provider.id", ondelete="CASCADE")
+    )
     auth_provider = relationship(
-        'AuthorizationProvider',
-        backref=backref('acls', cascade='all, delete-orphan', passive_deletes=True),
+        "AuthorizationProvider",
+        backref=backref("acls", cascade="all, delete-orphan", passive_deletes=True),
     )
 
     def __str__(self):
@@ -338,19 +365,24 @@ class AccessPrivilege(Base):
 
 class UserToBucket(Base):
     """Unused"""
-    __tablename__ = 'user_to_bucket'
+
+    __tablename__ = "user_to_bucket"
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey(User.id, ondelete='CASCADE'))
+    user_id = Column(Integer, ForeignKey(User.id, ondelete="CASCADE"))
     user = relationship(
         User,
-        backref=backref('user_to_buckets', cascade='all, delete-orphan', passive_deletes=True),
+        backref=backref(
+            "user_to_buckets", cascade="all, delete-orphan", passive_deletes=True
+        ),
     )
 
-    bucket_id = Column(Integer, ForeignKey('bucket.id', ondelete='CASCADE'))
+    bucket_id = Column(Integer, ForeignKey("bucket.id", ondelete="CASCADE"))
     bucket = relationship(
-        'Bucket',
-        backref=backref('user_to_buckets', cascade='all, delete-orphan', passive_deletes=True),
+        "Bucket",
+        backref=backref(
+            "user_to_buckets", cascade="all, delete-orphan", passive_deletes=True
+        ),
     )
     privilege = Column(ARRAY(String))
 
@@ -392,14 +424,12 @@ class Bucket(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
-    provider_id = Column(Integer, ForeignKey('cloud_provider.id', ondelete='CASCADE'))
+    provider_id = Column(Integer, ForeignKey("cloud_provider.id", ondelete="CASCADE"))
     provider = relationship(
-       'CloudProvider',
-       backref=backref('buckets', cascade='all, delete-orphan', passive_deletes=True),
+        "CloudProvider",
+        backref=backref("buckets", cascade="all, delete-orphan", passive_deletes=True),
     )
-    users = association_proxy(
-        'user_to_buckets',
-        'user')
+    users = association_proxy("user_to_buckets", "user")
 
 
 class CloudProvider(Base):
@@ -444,16 +474,20 @@ class ProjectToBucket(Base):
     __tablename__ = "project_to_bucket"
 
     id = Column(Integer, primary_key=True)
-    project_id = Column(Integer, ForeignKey('project.id', ondelete='CASCADE'))
+    project_id = Column(Integer, ForeignKey("project.id", ondelete="CASCADE"))
     project = relationship(
         Project,
-        backref=backref('project_to_buckets', cascade='all, delete-orphan', passive_deletes=True),
+        backref=backref(
+            "project_to_buckets", cascade="all, delete-orphan", passive_deletes=True
+        ),
     )
 
-    bucket_id = Column(Integer, ForeignKey('bucket.id', ondelete='CASCADE'))
+    bucket_id = Column(Integer, ForeignKey("bucket.id", ondelete="CASCADE"))
     bucket = relationship(
-        'Bucket',
-        backref=backref('project_to_buckets', cascade='all, delete-orphan', passive_deletes=True),
+        "Bucket",
+        backref=backref(
+            "project_to_buckets", cascade="all, delete-orphan", passive_deletes=True
+        ),
     )
     privilege = Column(ARRAY(String))
 
@@ -464,17 +498,37 @@ class ComputeAccess(Base):
     id = Column(Integer, primary_key=True)
 
     # compute access can be linked to a project/research group/user
-    project_id = Column(Integer, ForeignKey('project.id', ondelete='CASCADE'))
-    project = relationship('Project', backref=backref('compute_access', cascade='all, delete-orphan', passive_deletes=True))
+    project_id = Column(Integer, ForeignKey("project.id", ondelete="CASCADE"))
+    project = relationship(
+        "Project",
+        backref=backref(
+            "compute_access", cascade="all, delete-orphan", passive_deletes=True
+        ),
+    )
 
-    user_id = Column(Integer, ForeignKey(User.id, ondelete='CASCADE'))
-    user = relationship('User', backref=backref('compute_access', cascade='all, delete-orphan', passive_deletes=True))
+    user_id = Column(Integer, ForeignKey(User.id, ondelete="CASCADE"))
+    user = relationship(
+        "User",
+        backref=backref(
+            "compute_access", cascade="all, delete-orphan", passive_deletes=True
+        ),
+    )
 
-    group_id = Column(Integer, ForeignKey('Group.id', ondelete='CASCADE'))
-    group = relationship('Group', backref=backref('compute_access', cascade='all, delete-orphan', passive_deletes=True))
+    group_id = Column(Integer, ForeignKey("Group.id", ondelete="CASCADE"))
+    group = relationship(
+        "Group",
+        backref=backref(
+            "compute_access", cascade="all, delete-orphan", passive_deletes=True
+        ),
+    )
 
-    provider_id = Column(Integer, ForeignKey('cloud_provider.id', ondelete='CASCADE'))
-    provider = relationship('CloudProvider', backref=backref('compute_access', cascade='all, delete-orphan', passive_deletes=True))
+    provider_id = Column(Integer, ForeignKey("cloud_provider.id", ondelete="CASCADE"))
+    provider = relationship(
+        "CloudProvider",
+        backref=backref(
+            "compute_access", cascade="all, delete-orphan", passive_deletes=True
+        ),
+    )
 
     instances = Column(Integer)
     cores = Column(Integer)
@@ -499,17 +553,37 @@ class StorageAccess(Base):
     )
     id = Column(Integer, primary_key=True)
 
-    project_id = Column(Integer, ForeignKey('project.id', ondelete='CASCADE'))
-    project = relationship('Project', backref=backref('storage_access', cascade='all, delete-orphan', passive_deletes=True))
+    project_id = Column(Integer, ForeignKey("project.id", ondelete="CASCADE"))
+    project = relationship(
+        "Project",
+        backref=backref(
+            "storage_access", cascade="all, delete-orphan", passive_deletes=True
+        ),
+    )
 
-    user_id = Column(Integer, ForeignKey(User.id, ondelete='CASCADE'))
-    user = relationship('User', backref=backref('storage_access', cascade='all, delete-orphan', passive_deletes=True))
+    user_id = Column(Integer, ForeignKey(User.id, ondelete="CASCADE"))
+    user = relationship(
+        "User",
+        backref=backref(
+            "storage_access", cascade="all, delete-orphan", passive_deletes=True
+        ),
+    )
 
-    group_id = Column(Integer, ForeignKey('Group.id', ondelete='CASCADE'))
-    group = relationship('Group', backref=backref('storage_access', cascade='all, delete-orphan', passive_deletes=True))
+    group_id = Column(Integer, ForeignKey("Group.id", ondelete="CASCADE"))
+    group = relationship(
+        "Group",
+        backref=backref(
+            "storage_access", cascade="all, delete-orphan", passive_deletes=True
+        ),
+    )
 
-    provider_id = Column(Integer, ForeignKey('cloud_provider.id', ondelete='CASCADE'))
-    provider = relationship('CloudProvider', backref=backref('storage_access', cascade='all, delete-orphan', passive_deletes=True))
+    provider_id = Column(Integer, ForeignKey("cloud_provider.id", ondelete="CASCADE"))
+    provider = relationship(
+        "CloudProvider",
+        backref=backref(
+            "storage_access", cascade="all, delete-orphan", passive_deletes=True
+        ),
+    )
 
     max_objects = Column(BigInteger)
     max_size = Column(BigInteger)
@@ -565,10 +639,12 @@ class Certificate(Base):
     __tablename__ = "certificate"
 
     id = Column(Integer, primary_key=True)
-    application_id = Column(Integer, ForeignKey('application.id', ondelete='CASCADE'))
+    application_id = Column(Integer, ForeignKey("application.id", ondelete="CASCADE"))
     application = relationship(
-            "Application",
-            backref=backref("certificates", cascade="all, delete-orphan", passive_deletes=True),
+        "Application",
+        backref=backref(
+            "certificates", cascade="all, delete-orphan", passive_deletes=True
+        ),
     )
     name = Column(String(40))
     extension = Column(String)
@@ -583,10 +659,12 @@ class S3Credential(Base):
     __tablename__ = "s3credential"
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey(User.id, ondelete='CASCADE'))
+    user_id = Column(Integer, ForeignKey(User.id, ondelete="CASCADE"))
     user = relationship(
-            'User',
-            backref=backref('s3credentials', cascade='all, delete-orphan', passive_deletes=True),
+        "User",
+        backref=backref(
+            "s3credentials", cascade="all, delete-orphan", passive_deletes=True
+        ),
     )
 
     access_key = Column(String)
@@ -598,10 +676,10 @@ class S3Credential(Base):
 class Tag(Base):
     __tablename__ = "tag"
 
-    user_id = Column(Integer, ForeignKey(User.id, ondelete='CASCADE'), primary_key=True)
+    user_id = Column(Integer, ForeignKey(User.id, ondelete="CASCADE"), primary_key=True)
     key = Column(String, primary_key=True)
     value = Column(String)
     user = relationship(
-        'User',
-        backref=backref('tags', cascade='all, delete-orphan', passive_deletes=True),
+        "User",
+        backref=backref("tags", cascade="all, delete-orphan", passive_deletes=True),
     )
