@@ -348,6 +348,8 @@ class IdentityProvider(Base):
     google = "google"
     itrust = "itrust"
     fence = "fence"
+    orcid = "orcid"
+    microsoft = "microsoft"
 
 
 class AuthorizationProvider(Base):
