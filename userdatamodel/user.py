@@ -64,8 +64,6 @@ class User(Base):
     phone_number = Column(String)
     email = Column(String)
 
-    _last_auth = Column(DateTime(timezone=False), server_default=func.now())
-
     idp_id = Column(Integer, ForeignKey("identity_provider.id"))
     identity_provider = relationship("IdentityProvider", backref="users")
 
