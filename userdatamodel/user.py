@@ -96,9 +96,10 @@ class User(Base):
 
     group_privileges = relationship(
         "AccessPrivilege",
-        #primaryjoin="user_to_group.c.user_id==User.id",
-        #secondary="join(AccessPrivilege, Group, AccessPrivilege.group_id==Group.id)."
-        #"join(user_to_group, Group.id == user_to_group.c.group_id)",
+        secondary="join(AccessPrivilege, Group, AccessPrivilege.group_id==Group.id)."
+        "join(user_to_group, Group.id == user_to_group.c.group_id)",
+        primaryjoin="user_to_group.c.user_id==User.id",
+        secondaryjoin="user_to_group.c.group_id==AccessPrivilege.group_id",
         collection_class=PrivilegeDict,
     )
     group_accesses = association_proxy(
