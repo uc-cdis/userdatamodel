@@ -99,7 +99,7 @@ class User(Base):
         secondary="join(AccessPrivilege, Group, AccessPrivilege.group_id==Group.id)."
         "join(user_to_group, Group.id == user_to_group.c.group_id)",
         primaryjoin="user_to_group.c.user_id==User.id",
-        secondaryjoin="user_to_group.c.group_id==AccessPrivilege.group_id",
+        secondaryjoin="user_to_group.c.group_id==foreign(AccessPrivilege.group_id)",
         collection_class=PrivilegeDict,
     )
     group_accesses = association_proxy(
