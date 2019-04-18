@@ -94,21 +94,6 @@ class User(Base):
 
     groups = association_proxy("user_to_groups", "group")
 
-    group_privileges = relationship(
-        "AccessPrivilege",
-        #secondary="join(AccessPrivilege, Group, AccessPrivilege.group_id==Group.id)."
-        #"join(user_to_group, Group.id == user_to_group.c.group_id)",
-        secondary="user_to_group",
-        primaryjoin="user_to_group.c.user_id==User.id",
-        secondaryjoin="user_to_group.c.group_id==AccessPrivilege.group_id",
-        collection_class=PrivilegeDict,
-    )
-    group_accesses = association_proxy(
-        "group_privileges",
-        "privilege",
-        creator=lambda k, v: AccessPrivilege(privilege=v, pj=k),
-    )
-
     active = Column(Boolean)
     is_admin = Column(Boolean, default=False)
 
@@ -133,8 +118,6 @@ class User(Base):
             "department_id": self.department_id,
             "active": self.active,
             "is_admin": self.is_admin,
-            "group_privileges": str(self.group_privileges),
-            "group_accesses": str(self.group_accesses),
             "projects": str(self.projects),
             "project_access": str(self.project_access),
         }
