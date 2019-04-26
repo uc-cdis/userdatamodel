@@ -17,6 +17,7 @@ from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.schema import ForeignKey
+from sqlalchemy.sql import func
 from sqlalchemy.types import LargeBinary
 from sqlalchemy.orm.collections import MappedCollection, collection
 import json
@@ -48,16 +49,6 @@ class PrivilegeDict(MappedCollection):
             super(PrivilegeDict, self).__setitem__(key, value, _sa_initiator)
 
 
-#: ``users_to_policies`` represents a many-to-many mapping between policies (in
-#: the RBAC system) and users (in the user data model).
-users_to_policies = Table(
-    "users_to_policies",
-    Base.metadata,
-    Column("user_id", Integer, ForeignKey("User.id")),
-    Column("policy_id", String, ForeignKey("policy.id")),
-)
-
-
 class User(Base):
 
     __tablename__ = "User"
@@ -72,8 +63,6 @@ class User(Base):
     display_name = Column(String)
     phone_number = Column(String)
     email = Column(String)
-
-    policies = relationship("Policy", secondary=users_to_policies)
 
     idp_id = Column(Integer, ForeignKey("identity_provider.id"))
     identity_provider = relationship("IdentityProvider", backref="users")
@@ -125,17 +114,6 @@ class User(Base):
 
     def __repr__(self):
         return self.__str__()
-
-
-class Policy(Base):
-    """
-    The ``Policy`` table tracks policies granted by arborist, the RBAC system,
-    and maps to users in fence through the `users_to_policies` table.
-    """
-
-    __tablename__ = "policy"
-
-    id = Column(Text, primary_key=True, unique=True)
 
 
 class GoogleProxyGroup(Base):

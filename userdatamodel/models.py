@@ -4,6 +4,5 @@ from user import (
     CloudProvider, StorageAccess, Bucket,
     ComputeAccess, UserToBucket,
     AuthorizationProvider, S3Credential,
-    HMACKeyPair, HMACKeyPairArchive, ProjectToBucket, Tag, Policy,
-    users_to_policies,
+    HMACKeyPair, HMACKeyPairArchive, ProjectToBucket, Tag,
 )
