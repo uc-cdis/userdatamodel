@@ -394,6 +394,7 @@ class IdentityProvider(Base):
     fence = "fence"
     orcid = "orcid"
     microsoft = "microsoft"
+    elixir = "elixir"
 
 
 class AuthorizationProvider(Base):
