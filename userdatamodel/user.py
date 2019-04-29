@@ -78,7 +78,7 @@ class User(Base):
     idp_id = Column(Integer, ForeignKey("identity_provider.id"))
     identity_provider = relationship("IdentityProvider", backref="users")
 
-    google_proxy_group_id = Column(String, ForeignKey("google_proxy_group.id"))
+    google_proxy_group_id = Column(String, ForeignKey("google_proxy_group.id", ondelete="SET NULL"))
 
     google_proxy_group = relationship(
         "GoogleProxyGroup",
