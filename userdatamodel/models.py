@@ -19,5 +19,4 @@ from user import (
     HMACKeyPairArchive,
     ProjectToBucket,
     Tag,
-    Policy,
 )
