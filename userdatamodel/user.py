@@ -629,7 +629,7 @@ class Certificate(Base):
     application = relationship(
         "Application",
         backref=backref(
-            "certificates", cascade="all, delete-orphan", passive_deletes=True
+            "certificates_uploaded", cascade="all, delete-orphan", passive_deletes=True
         ),
     )
     name = Column(String(40))
