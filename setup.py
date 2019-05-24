@@ -22,7 +22,7 @@ setup(
     version=get_version(),
     packages=find_packages(),
     install_requires=[
-        'sqlalchemy~=0.9',
+        'sqlalchemy~=1.3.3',
         'cdislogging',
     ],
     scripts=[
