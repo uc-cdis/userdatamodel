@@ -1,4 +1,4 @@
-from user import IdentityProvider
+from .user import IdentityProvider
 IDENTITY_PROVIDERS = ['google', 'itrust', 'fence']
 
 

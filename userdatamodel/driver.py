@@ -6,7 +6,7 @@ from sqlalchemy import create_engine
 from sqlalchemy import (
     String, Column, MetaData, Table
 )
-from models import * # noqa
+from .models import * # noqa
 
 
 class SQLAlchemyDriver(object):
