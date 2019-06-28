@@ -171,8 +171,7 @@ def add_foreign_key_constraint_if_not_exist(
         if foreign_key_name not in foreign_keys:
             with driver.session as session:
                 session.execute(
-                    'ALTER TABLE "{}" ADD CONSTRAINT {} '
-                    "FOREIGN KEY({}) REFERENCES {} ({});".format(
+                    'ALTER TABLE "{}" ADD CONSTRAINT {} FOREIGN KEY({}) REFERENCES {} ({});'.format(
                         table_name,
                         foreign_key_name,
                         column_name,
