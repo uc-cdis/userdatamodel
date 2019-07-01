@@ -17,15 +17,11 @@ def get_version():
             "from GitHub and make sure that the git CLI is available."
         )
 
+
 setup(
-    name='userdatamodel',
+    name="userdatamodel",
     version=get_version(),
     packages=find_packages(),
-    install_requires=[
-        'sqlalchemy~=1.3.3',
-        'cdislogging',
-    ],
-    scripts=[
-        'bin/userdatamodel-init',
-    ],
+    install_requires=["sqlalchemy~=1.3.3", "cdislogging"],
+    scripts=["bin/userdatamodel-init"],
 )

@@ -1,7 +1,11 @@
 language: python
 dist: xenial
 python:
-- 2.7
+- '2.7'
+- '3.6'
+matrix:
+  allow_failures:
+  - python: '2.7'
 install:
 - pip install pipenv
 - pipenv install --dev --deploy --python `which python`
@@ -27,4 +31,4 @@ after_deploy:
 - pipenv run gen3git release
 env:
   global:
-    secure: unLSF1fRdtOH1TCdB0Q9XOpEk9jxAZB5kl9ox8ulvrZQ2830ON3ImzilpjF9QCqxvHWbwr1bZfx2qw8114JppRrbl8TXT2AJViZxre6rpLvRLEYzIbijuNAmZxcITHNsMcW+jDwDgXilollFbPugoAxcEO8JZLjupAzPFqsUbYOWf0XnBDqcO//YUPwBEkGtggLqqEsOyhwxuw5J10i8jpu423/8WlUk1mxWAzxdrn+ppY3lAft1HYabCdot5rC7F5OXfAEn3kigNUDWj4Ge1/JTkRaBLwgP2v971IRGPejAVBCo5gz2fHqdLd7hZlm7Ky1QiEKWOTKCen77KMBt8Q3vG6F6nAEVqTYCJjJdDqK4OpPdh6+YyN4Z6R0fwxGl5vzlEgTESXNi/aDAab/rL1/RKgnne3tWWN39SCTjwHaUWWKrRhEDT/57XE9wrZp7AA39UKYcZKU808yD+bxn7R51otMVMVZ7oSTav/CN0Ky/liLCjIm9CKG66uIO7y/mS+1jNTSDq95LU4r8MSEFTkSzCNsct+tsU6NL35Rtx9CrMIv67HfkNE3ARNVYbWyQyUB6SOxtXMq5Re5MVsnhL6VXlnZLo+shjL+M3sufghZfqod+y4Swe7TJ5RdtbgH/nrmqFu78uyxmM/dV4lqbNdAkt3QDkWKzKqwmQ863bdM=
+    secure: k5YFaPRfVGnzEFJUHrkZYBqeNBMjWcxMbX34yi1aKTH7wv2qFFJH2FQug1Togoa5s2mDjD9S1uhje0e1+WLT1s59OgKCrOOjusXZykm9ZQH/NNO/bx1umqCK8jPzhMj+QZbUJ4qVRyJH5TBxSwJkGU7hCiHr3wha5KRMU7zR49mG8ELrObtyY9fYJiK7OHPWBh1/6+h0hWjrjqMBixiRAcPMvPsUt0vynPb6c4oHtqBCz1O4otJCLMwuIeYW/Ia7xj9MXE+BrNzOmQuwElmwoJXAFB81uu+HK3kp15T2MzmCg/YmbqmkM6UE3pMXfOx4uefXOXvVT1SRrIFlo9n6pLk2PbUvlDlUAOJnViyUnslYLx/IgDvghRs30Dr3fvTngWDSVLZsJ/RnGZEslnV67PwYQuVOoZO34GJNTtsf4WNvMXLnOVvrcdj4sqIcOFhB4TD/YHXq2lFXfEonnzdViQVvXglHe0w5jUVgXY4sewBxj/jxAsu3RXSc697qX0TUSBTN6ZwXu1z1EKl8pTZoOMZ9UFW5D5crTaxRyTpUDuEOGa1bHLnS/Re/GCYfo1gmj9vHdYA4ZXdMStZ6PjW92M55QCytttOAJ34DuTYzAm9KNyl2bFTGfZrDGj0S3lIJzkO8i6vkhuSQNmyiHywSrtx3cqIlfbiOS4fiGdYsNaw=

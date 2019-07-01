@@ -41,7 +41,7 @@ class PrivilegeDict(MappedCollection):
     @collection.internally_instrumented
     def __setitem__(self, key, value, _sa_initiator=None):
         # do something with key, value
-        if self.has_key(key) and value.privilege:
+        if key in self and value.privilege:
             for item in value.privilege:
                 if item not in self[key].privilege:
                     self[key].privilege.append(item)
