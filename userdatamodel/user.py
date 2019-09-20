@@ -102,6 +102,8 @@ class User(Base):
 
     application = relationship("Application", backref="user", uselist=False)
 
+    additional_info = Column(JSONB, server_default=text("{}"))
+
     def __str__(self):
         str_out = {
             "id": self.id,
@@ -118,6 +120,16 @@ class User(Base):
 
     def __repr__(self):
         return self.__str__()
+
+
+class UserAuditLog(Base):
+    __tablename__ = "user_audit_logs"
+
+    id = Column(BigInteger, primary_key=True)
+    timestamp = Column(DateTime, server_default=text("now()"), nullable=False)
+    operation = Column(String, nullable=False)
+    old_values = Column(JSONB, server_default=text("'{}'"))
+    new_values = Column(JSONB, server_default=text("'{}'"))
 
 
 class GoogleProxyGroup(Base):
@@ -377,6 +389,7 @@ class IdentityProvider(Base):
     orcid = "orcid"
     microsoft = "microsoft"
     elixir = "elixir"
+    synapse = "synapse"
 
 
 class AuthorizationProvider(Base):
