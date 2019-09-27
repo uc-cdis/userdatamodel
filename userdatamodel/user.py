@@ -102,7 +102,7 @@ class User(Base):
 
     application = relationship("Application", backref="user", uselist=False)
 
-    additional_info = Column(JSONB, server_default=text("{}"))
+    additional_info = Column(JSONB, server_default=text("'{}'"))
 
     def __str__(self):
         str_out = {
