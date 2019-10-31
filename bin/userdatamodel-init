@@ -10,7 +10,7 @@ def main(**kwargs):
         "postgresql://{username}:{password}@{host}/{db}".format(**kwargs),
         ignore_db_error=False,
         )
-    print 'initializing database'
+    print('initializing database')
     init_defaults(db)
 
 
