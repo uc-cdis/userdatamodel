@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import argparse
 from userdatamodel.models import * # noqa
 from userdatamodel.init_defaults import init_defaults
