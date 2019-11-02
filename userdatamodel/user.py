@@ -54,7 +54,7 @@ class User(Base):
     __tablename__ = "User"
 
     id = Column(Integer, primary_key=True)
-    username = Column(String(40), unique=True)
+    username = Column(String(255), unique=True)
 
     # id from identifier, which is not guarenteed to be unique
     # across all identifiers.
