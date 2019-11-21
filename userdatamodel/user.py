@@ -132,6 +132,18 @@ class UserAuditLog(Base):
     new_values = Column(JSONB, server_default=text("'{}'"))
 
 
+class CertAuditLog(Base):
+    __tablename__ = "cert_audit_logs"
+
+    id = Column(BigInteger, primary_key=True)
+    timestamp = Column(DateTime, server_default=text("now()"), nullable=False)
+    operation = Column(String, nullable=False)
+    user_id = Column(Integer, nullable=False)
+    username = Column(String(255), nullable=False)
+    old_values = Column(JSONB, server_default=text("'{}'"))
+    new_values = Column(JSONB, server_default=text("'{}'"))
+
+
 class GoogleProxyGroup(Base):
     __tablename__ = "google_proxy_group"
 
