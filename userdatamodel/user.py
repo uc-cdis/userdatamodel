@@ -402,6 +402,7 @@ class IdentityProvider(Base):
     microsoft = "microsoft"
     elixir = "elixir"
     synapse = "synapse"
+    cognito = "cognito"
 
 
 class AuthorizationProvider(Base):
