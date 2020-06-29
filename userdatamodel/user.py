@@ -403,6 +403,7 @@ class IdentityProvider(Base):
     elixir = "elixir"
     synapse = "synapse"
     cognito = "cognito"
+    ras = "ras"
 
 
 class AuthorizationProvider(Base):
