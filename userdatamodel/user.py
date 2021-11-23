@@ -450,6 +450,7 @@ class Project(Base):
     parent_id = Column(Integer, ForeignKey("project.id"))
     parent = relationship("Project", backref="sub_projects", remote_side=[id])
     buckets = association_proxy("project_to_buckets", "bucket")
+    authz = Column(String)
 
     def __str__(self):
         str_out = {
@@ -458,6 +459,7 @@ class Project(Base):
             "auth_id": self.auth_id,
             "description": self.description,
             "parent_id": self.parent_id,
+            "authz": self.authz,
         }
         return json.dumps(str_out)
 
