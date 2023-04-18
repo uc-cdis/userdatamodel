@@ -3,9 +3,11 @@ dist: xenial
 python:
 - '2.7'
 - '3.6'
+- '3.9'
 matrix:
   allow_failures:
   - python: '2.7'
+  - python: '3.6'
 install:
 - pip install pipenv
 - pipenv install --dev --deploy --python `which python`
