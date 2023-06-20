@@ -2,7 +2,6 @@ language: python
 dist: xenial
 python:
 - '2.7'
-- '3.6'
 - '3.9'
 matrix:
   allow_failures:
