@@ -87,7 +87,7 @@ class User(Base):
 
     groups = association_proxy("user_to_groups", "group")
 
-    active = Column(Boolean)
+    active = Column(Boolean, default=True, nullable=False)
     is_admin = Column(Boolean, default=False)
 
     projects = association_proxy("accesses_privilege", "project")
