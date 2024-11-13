@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "userdatamodel"
+version = "3.0.0"
+description = "PDC data model for user management"
+authors = ["CTDS UChicago <cdis@uchicago.edu>"]
+license = "Apache-2.0"
+repository = "https://github.com/uc-cdis/userdatamodel"
+readme = "README.md"
+include = [
+  "NOTICE"
+]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+cdislogging = "^1"
+sqlalchemy = ">=1.3.0"
+
+[tool.poetry.scripts]
+userdatamodel-init = "bin/userdatamodel-init:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
