@@ -8,7 +8,7 @@ from .models import *  # noqa
 
 
 class SQLAlchemyDriver(object):
-    def __init__(self, conn, ignore_db_error=True, **config):
+    def __init__(self, conn, ignore_db_error=True, setup_tables=True, **config):
         """
         setup sqlalchemy engine and session
         Args:
@@ -23,14 +23,17 @@ class SQLAlchemyDriver(object):
 
         Base.metadata.bind = self.engine
         self.Session = sessionmaker(bind=self.engine, expire_on_commit=False)
-        if ignore_db_error:
-            try:
+        if setup_tables:
+            if ignore_db_error:
+                try:
+                    self.setup_db()
+                except Exception:
+                    self.logger.exception(
+                        "Fail to setup database tables, continue anyways"
+                    )
+                    pass
+            else:
                 self.setup_db()
-            except Exception:
-                self.logger.exception("Fail to setup database tables, continue anyways")
-                pass
-        else:
-            self.setup_db()
 
     def setup_db(self):
         self.pre_migrate()
