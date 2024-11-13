@@ -16,7 +16,7 @@ cdislogging = "^1"
 sqlalchemy = ">=1.3.0"
 
 [tool.poetry.scripts]
-userdatamodel-init = "bin/userdatamodel-init:main"
+userdatamodel-init = "bin.userdatamodel_init:main"
 
 [build-system]
 requires = ["poetry-core"]
