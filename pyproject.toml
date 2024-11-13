@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "userdatamodel"
-version = "3.0.0"
+version = "3.0.1"
 description = "PDC data model for user management"
 authors = ["CTDS UChicago <cdis@uchicago.edu>"]
 license = "Apache-2.0"
@@ -16,7 +16,7 @@ cdislogging = "^1"
 sqlalchemy = ">=1.3.0"
 
 [tool.poetry.scripts]
-userdatamodel-init = "bin/userdatamodel-init:main"
+userdatamodel-init = "bin.userdatamodel_init:main"
 
 [build-system]
 requires = ["poetry-core"]
