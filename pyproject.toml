@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "userdatamodel"
-version = "3.0.1"
+version = "3.1.0"
 description = "PDC data model for user management"
 authors = ["CTDS UChicago <cdis@uchicago.edu>"]
 license = "Apache-2.0"
